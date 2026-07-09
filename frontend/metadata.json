@@ -1,0 +1,6 @@
+{
+  "name": "Economia com História – Angola",
+  "description": "Sistema educativo digital que preserva e estuda a memória económica angolana.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

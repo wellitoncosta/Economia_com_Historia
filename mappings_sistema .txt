@@ -1,0 +1,1392 @@
+﻿ATUALIZACAO 2026-07-09 - ALTERACOES RECENTES
+==============================================
+
+Esta secao prevalece sobre trechos antigos deste documento quando houver conflito.
+
+ROTAS PUBLICAS ADICIONADAS/AJUSTADAS
+------------------------------------
+- GET  /api/quiz/salas
+  Lista todas as salas de quiz existentes na base de dados.
+
+- GET  /api/quiz/salas/{id}/perguntas
+  Lista perguntas publicas da sala sem expor respostaCorreta.
+
+- GET  /api/quiz/salas/{id}/ranking
+  Lista ranking da sala.
+
+- POST /api/quiz/salas/{id}/entrar
+  Agora aceita visitante sem JWT. Quando nao ha utilizador autenticado, o backend usa o utilizador tecnico visitante@local.
+
+- POST /api/quiz/salas/{id}/responder
+  Nova rota HTTP para responder quiz sem depender do WebSocket.
+  Publica para visitante e autenticados.
+  Request JSON:
+  {
+    "perguntaId": "uuid-da-pergunta",
+    "resposta": "Texto da alternativa escolhida",
+    "tempoGastoMs": 12000
+  }
+  Response JSON:
+  {
+    "perguntaId": "uuid-da-pergunta",
+    "correta": true,
+    "pontos": 10,
+    "pontuacaoAcumulada": 30
+  }
+  Observacoes:
+  - Se a sala estiver AGUARDANDO, o backend muda automaticamente para EM_ANDAMENTO ao responder.
+  - Se o participante ainda nao existir, o backend cria automaticamente.
+  - Sala FINALIZADA nao aceita resposta.
+
+COMENTARIOS
+-----------
+- POST /api/topicos/{topicoId}/comentarios agora aceita visitante sem JWT.
+- Quando nao ha login, o backend grava com o utilizador tecnico visitante@local.
+- ComentarioResponse agora inclui autorNome.
+  Response JSON atualizado:
+  {
+    "id": "uuid-do-comentario",
+    "topicoId": "uuid-do-topico",
+    "autorId": "uuid-do-autor",
+    "autorNome": "email@dominio.com ou Visitante",
+    "comentarioPaiId": null,
+    "texto": "Boa pergunta!",
+    "score": 0,
+    "dataCriacao": "2026-07-03T20:30:00",
+    "respostas": []
+  }
+
+TOPICOS
+-------
+- TopicoResponse agora inclui autorNome.
+  Response JSON atualizado:
+  {
+    "id": "uuid-do-topico",
+    "forumId": "uuid-do-forum",
+    "autorId": "uuid-do-autor",
+    "autorNome": "email@dominio.com",
+    "titulo": "Titulo do topico",
+    "conteudo": "Texto do topico",
+    "score": 10,
+    "dataCriacao": "2026-07-03T20:30:00"
+  }
+
+QUIZ - CRIACAO E CONTROLE
+-------------------------
+- POST /api/quiz/salas continua exigindo JWT, mas deixou de exigir MASTER/moderador.
+- Qualquer utilizador autenticado pode criar sala de quiz.
+- POST /api/quiz/salas/{id}/perguntas exige JWT.
+- POST /api/quiz/salas/{id}/iniciar e /finalizar exigem JWT.
+
+RECUPERACAO DE CONTA
+--------------------
+- POST /api/recuperacao/solicitar valida se o email existe na plataforma.
+- Se o email nao existir, retorna erro 404 RESOURCE_NOT_FOUND.
+- Se SMTP estiver configurado por SMTP_USERNAME/SMTP_PASSWORD, envia email real.
+- Se SMTP nao estiver configurado ou falhar, o backend devolve mensagem com codigo de teste para desenvolvimento:
+  {
+    "mensagem": "Servico de email nao configurado. Codigo de teste: 123456"
+  }
+- POST /api/recuperacao/validar valida o codigo sem inutiliza-lo.
+- POST /api/recuperacao/redefinir-senha consome o codigo e altera a palavra-passe.
+
+FRONTEND E ORIGEM DOS DADOS
+---------------------------
+- Listagem de quiz usa GET /api/quiz/salas.
+- Execucao de quiz usa GET /api/quiz/salas/{id}/perguntas e POST /api/quiz/salas/{id}/responder.
+- Rankings usam GET /api/rankings/regioes e GET /api/rankings/instituicoes.
+- Conteudos e recomendacoes nao usam imagens externas mockadas; os cards sao construidos com titulo, tipo, categoria, descricao e datas vindas da API/base de dados.
+
+DOCUMENTACAO DOS MAPPINGS DO SISTEMA
+====================================
+
+Projeto: plataforma-aprendizagem
+Base URL padrao: http://localhost:8080
+Formato padrao: application/json
+
+Como os JSON funcionam neste projeto
+------------------------------------
+1. Os requests com body usam DTOs Java do tipo record. Cada parametro do record vira uma chave JSON.
+   Exemplo: record LoginRequest(String email, String password) vira:
+   {
+     "email": "user@email.com",
+     "password": "12345678"
+   }
+
+2. Campos anotados com:
+   - @NotBlank: obrigatorios, nao podem vir vazios.
+   - @NotNull: obrigatorios, nao podem ser null.
+   - @Email: precisam ter formato de email.
+   - @Size: precisam respeitar tamanho minimo/maximo.
+   - @Min: precisam ser maiores ou iguais ao valor definido.
+   - @Pattern: precisam respeitar o padrao indicado.
+
+3. Enums devem ser enviados como texto exatamente igual ao nome do enum:
+   - Role: VISITANTE, INSCRITO, CRIADOR, REVISOR, MASTER
+   - TipoConteudo: TEXTO, VIDEO, AUDIO
+   - PapelForum: DONO, MODERADOR, MEMBRO
+   - EstadoSalaQuiz: AGUARDANDO, EM_ANDAMENTO, FINALIZADA
+   - TipoEntidadeVoto: TOPICO, COMENTARIO
+   - TipoVoto: UP, DOWN
+
+4. Datas retornam em formato ISO-8601, por exemplo:
+   "2026-07-03T20:30:00"
+
+5. Rotas protegidas precisam de JWT no header:
+   Authorization: Bearer <token>
+
+6. Estrutura padrao de erro:
+   {
+     "codigo": "VALIDATION_ERROR",
+     "mensagem": "Pedido invalido",
+     "timestamp": "2026-07-03T20:30:00",
+     "path": "/api/auth/login",
+     "detalhes": [
+       "email: must not be blank"
+     ]
+   }
+
+Codigos comuns de erro:
+- 400 BUSINESS_RULE: regra de negocio violada.
+- 400 VALIDATION_ERROR: JSON invalido ou campos obrigatorios ausentes.
+- 403 FORBIDDEN: utilizador sem permissao.
+- 404 RESOURCE_NOT_FOUND: recurso nao encontrado.
+- 500 INTERNAL_ERROR: erro interno.
+
+Observacao sobre autenticacao
+-----------------------------
+Rotas publicas principais:
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/recuperacao/**
+- GET /api/conteudos/**
+- GET /api/foruns/**
+- GET /api/topicos/**
+- GET /api/rankings/**
+
+As outras rotas normalmente exigem Authorization: Bearer <token>.
+
+
+1. AUTH
+=======
+
+1.1 POST /api/auth/register
+---------------------------
+Descricao: registra um novo utilizador.
+Autenticacao: publica.
+Status de sucesso: 200 OK.
+
+Request JSON:
+{
+  "email": "user@email.com",
+  "password": "12345678",
+  "regiao": "Luanda",
+  "instituicao": "ISPTEC"
+}
+
+Regras do request:
+- email: obrigatorio, formato de email.
+- password: obrigatorio, minimo 8 e maximo 100 caracteres.
+- regiao: opcional.
+- instituicao: opcional.
+
+Response JSON:
+{
+  "token": "jwt-token",
+  "utilizador": {
+    "id": "uuid-do-utilizador",
+    "email": "user@email.com",
+    "role": "VISITANTE",
+    "pontosAcumulados": 0,
+    "regiao": "Luanda",
+    "instituicao": "ISPTEC"
+  }
+}
+
+Como funciona:
+- O backend cria o utilizador e devolve um token JWT.
+- O objeto utilizador mostra os dados publicos do utilizador autenticado.
+
+1.2 POST /api/auth/login
+------------------------
+Descricao: autentica um utilizador existente.
+Autenticacao: publica.
+Status de sucesso: 200 OK.
+
+Request JSON:
+{
+  "email": "user@email.com",
+  "password": "12345678"
+}
+
+Regras do request:
+- email: obrigatorio, formato de email.
+- password: obrigatorio.
+
+Response JSON:
+{
+  "token": "jwt-token",
+  "utilizador": {
+    "id": "uuid-do-utilizador",
+    "email": "user@email.com",
+    "role": "INSCRITO",
+    "pontosAcumulados": 25,
+    "regiao": "Luanda",
+    "instituicao": "ISPTEC"
+  }
+}
+
+Como funciona:
+- Se as credenciais estiverem corretas, retorna o token JWT.
+- Use esse token no header Authorization nas rotas protegidas.
+
+1.3 GET /api/auth/me
+--------------------
+Descricao: devolve o utilizador autenticado.
+Autenticacao: obrigatoria.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-do-utilizador",
+  "email": "user@email.com",
+  "role": "INSCRITO",
+  "pontosAcumulados": 25,
+  "regiao": "Luanda",
+  "instituicao": "ISPTEC"
+}
+
+
+2. USUARIOS
+===========
+
+2.1 GET /api/usuarios/{id}
+--------------------------
+Descricao: busca um utilizador pelo id.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador do utilizador.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-do-utilizador",
+  "email": "user@email.com",
+  "role": "INSCRITO",
+  "pontosAcumulados": 100,
+  "regiao": "Luanda",
+  "instituicao": "ISPTEC"
+}
+
+2.2 PATCH /api/usuarios/{id}/role
+---------------------------------
+Descricao: altera a role de um utilizador.
+Autenticacao: obrigatoria.
+Permissao: apenas MASTER.
+Path params:
+- id: identificador do utilizador.
+Status de sucesso: 200 OK.
+
+Request JSON:
+{
+  "role": "CRIADOR"
+}
+
+Regras do request:
+- role: obrigatorio. Valores: VISITANTE, INSCRITO, CRIADOR, REVISOR, MASTER.
+
+Response JSON:
+{
+  "id": "uuid-do-utilizador",
+  "email": "user@email.com",
+  "role": "CRIADOR",
+  "pontosAcumulados": 100,
+  "regiao": "Luanda",
+  "instituicao": "ISPTEC"
+}
+
+
+3. CONTEUDOS
+============
+
+3.1 POST /api/conteudos
+-----------------------
+Descricao: cria um conteudo.
+Autenticacao: obrigatoria.
+Permissao: CRIADOR, REVISOR ou MASTER.
+Status de sucesso: 201 CREATED.
+
+Request JSON:
+{
+  "titulo": "Introducao a Java",
+  "descricao": "Aula inicial sobre Java",
+  "tipo": "VIDEO",
+  "categoria": "Programacao",
+  "tags": ["java", "backend"],
+  "urlMidia": "https://exemplo.com/video.mp4",
+  "corpoTexto": null,
+  "exclusivo": false
+}
+
+Regras do request:
+- titulo: obrigatorio.
+- descricao: opcional.
+- tipo: obrigatorio. Valores: TEXTO, VIDEO, AUDIO.
+- categoria: obrigatoria.
+- tags: opcional, lista de strings.
+- urlMidia: opcional.
+- corpoTexto: opcional.
+- exclusivo: opcional, true ou false.
+
+Response JSON:
+{
+  "id": "uuid-do-conteudo",
+  "titulo": "Introducao a Java",
+  "descricao": "Aula inicial sobre Java",
+  "tipo": "VIDEO",
+  "categoria": "Programacao",
+  "tags": ["java", "backend"],
+  "urlMidia": "https://exemplo.com/video.mp4",
+  "corpoTexto": null,
+  "approved": false,
+  "exclusivo": false,
+  "autorId": "uuid-do-autor",
+  "dataCriacao": "2026-07-03T20:30:00"
+}
+
+3.2 GET /api/conteudos
+----------------------
+Descricao: lista/explora conteudos.
+Autenticacao: publica, mas se houver token o backend pode usar o userId para regras de acesso.
+Query params opcionais:
+- tipo: TEXTO, VIDEO ou AUDIO.
+- categoria: texto da categoria.
+- tag: tag unica.
+Status de sucesso: 200 OK.
+
+Exemplo:
+GET /api/conteudos?tipo=VIDEO&categoria=Programacao&tag=java
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "id": "uuid-do-conteudo",
+    "titulo": "Introducao a Java",
+    "descricao": "Aula inicial sobre Java",
+    "tipo": "VIDEO",
+    "categoria": "Programacao",
+    "tags": ["java", "backend"],
+    "urlMidia": "https://exemplo.com/video.mp4",
+    "corpoTexto": null,
+    "approved": true,
+    "exclusivo": false,
+    "autorId": "uuid-do-autor",
+    "dataCriacao": "2026-07-03T20:30:00"
+  }
+]
+
+3.3 GET /api/conteudos/{id}
+---------------------------
+Descricao: busca um conteudo por id.
+Autenticacao: publica, mas conteudo exclusivo pode depender do utilizador autenticado/subscricao.
+Path params:
+- id: identificador do conteudo.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-do-conteudo",
+  "titulo": "Introducao a Java",
+  "descricao": "Aula inicial sobre Java",
+  "tipo": "VIDEO",
+  "categoria": "Programacao",
+  "tags": ["java", "backend"],
+  "urlMidia": "https://exemplo.com/video.mp4",
+  "corpoTexto": null,
+  "approved": true,
+  "exclusivo": false,
+  "autorId": "uuid-do-autor",
+  "dataCriacao": "2026-07-03T20:30:00"
+}
+
+3.4 PATCH /api/conteudos/{id}/aprovar
+-------------------------------------
+Descricao: aprova ou reprova um conteudo.
+Autenticacao: obrigatoria.
+Permissao: REVISOR ou MASTER.
+Path params:
+- id: identificador do conteudo.
+Query params:
+- aprovado: true ou false. Se nao enviar, o padrao e true.
+Status de sucesso: 200 OK.
+
+Exemplo:
+PATCH /api/conteudos/{id}/aprovar?aprovado=true
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-do-conteudo",
+  "titulo": "Introducao a Java",
+  "descricao": "Aula inicial sobre Java",
+  "tipo": "VIDEO",
+  "categoria": "Programacao",
+  "tags": ["java", "backend"],
+  "urlMidia": "https://exemplo.com/video.mp4",
+  "corpoTexto": null,
+  "approved": true,
+  "exclusivo": false,
+  "autorId": "uuid-do-autor",
+  "dataCriacao": "2026-07-03T20:30:00"
+}
+
+
+4. FORUNS
+=========
+
+4.1 POST /api/foruns
+--------------------
+Descricao: cria um forum.
+Autenticacao: obrigatoria.
+Permissao: INSCRITO, CRIADOR, REVISOR ou MASTER.
+Status de sucesso: 201 CREATED.
+
+Request JSON:
+{
+  "nome": "Forum de Java",
+  "descricao": "Discussao sobre Java",
+  "privado": false,
+  "limiteUtilizadores": 100
+}
+
+Regras do request:
+- nome: obrigatorio, maximo 120 caracteres.
+- descricao: opcional.
+- privado: opcional.
+- limiteUtilizadores: opcional, minimo 1 quando enviado.
+
+Response JSON:
+{
+  "id": "uuid-do-forum",
+  "donoId": "uuid-do-dono",
+  "nome": "Forum de Java",
+  "descricao": "Discussao sobre Java",
+  "privado": false,
+  "limiteUtilizadores": 100,
+  "dataCriacao": "2026-07-03T20:30:00"
+}
+
+4.2 GET /api/foruns
+-------------------
+Descricao: lista foruns.
+Autenticacao: publica, mas o token pode influenciar acesso a foruns privados.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "id": "uuid-do-forum",
+    "donoId": "uuid-do-dono",
+    "nome": "Forum de Java",
+    "descricao": "Discussao sobre Java",
+    "privado": false,
+    "limiteUtilizadores": 100,
+    "dataCriacao": "2026-07-03T20:30:00"
+  }
+]
+
+4.3 GET /api/foruns/{id}
+------------------------
+Descricao: busca um forum por id.
+Autenticacao: publica, mas forum privado pode exigir permissao/membro.
+Path params:
+- id: identificador do forum.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-do-forum",
+  "donoId": "uuid-do-dono",
+  "nome": "Forum de Java",
+  "descricao": "Discussao sobre Java",
+  "privado": false,
+  "limiteUtilizadores": 100,
+  "dataCriacao": "2026-07-03T20:30:00"
+}
+
+4.4 POST /api/foruns/{id}/membros
+---------------------------------
+Descricao: adiciona um membro ao forum.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador do forum.
+Status de sucesso: 204 NO CONTENT.
+
+Request JSON:
+{
+  "utilizadorId": "uuid-do-utilizador",
+  "papel": "MEMBRO"
+}
+
+Regras do request:
+- utilizadorId: obrigatorio.
+- papel: obrigatorio. Valores: DONO, MODERADOR, MEMBRO.
+
+Response JSON:
+Nao devolve body.
+
+4.5 DELETE /api/foruns/{id}/membros/{membroId}
+----------------------------------------------
+Descricao: remove um membro do forum.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador do forum.
+- membroId: identificador do membro.
+Status de sucesso: 204 NO CONTENT.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+Nao devolve body.
+
+4.6 PATCH /api/foruns/{id}/membros/{membroId}/fala
+--------------------------------------------------
+Descricao: altera permissao de fala/suspensao de um membro.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador do forum.
+- membroId: identificador do membro.
+Status de sucesso: 204 NO CONTENT.
+
+Request JSON:
+{
+  "podeFalar": false,
+  "suspensoAte": "2026-07-10T12:00:00"
+}
+
+Regras do request:
+- podeFalar: obrigatorio, true ou false.
+- suspensoAte: opcional, data/hora ISO-8601.
+
+Response JSON:
+Nao devolve body.
+
+
+5. TOPICOS
+==========
+
+5.1 POST /api/topicos
+---------------------
+Descricao: cria um topico em um forum.
+Autenticacao: obrigatoria.
+Permissao: INSCRITO, CRIADOR, REVISOR ou MASTER.
+Status de sucesso: 201 CREATED.
+
+Request JSON:
+{
+  "forumId": "uuid-do-forum",
+  "titulo": "Duvida sobre Spring Boot",
+  "conteudo": "Como funciona injecao de dependencias?"
+}
+
+Regras do request:
+- forumId: obrigatorio.
+- titulo: obrigatorio.
+- conteudo: obrigatorio.
+
+Response JSON:
+{
+  "id": "uuid-do-topico",
+  "forumId": "uuid-do-forum",
+  "autorId": "uuid-do-autor",
+  "titulo": "Duvida sobre Spring Boot",
+  "conteudo": "Como funciona injecao de dependencias?",
+  "score": 0,
+  "dataCriacao": "2026-07-03T20:30:00"
+}
+
+5.2 GET /api/topicos/{id}
+-------------------------
+Descricao: busca um topico por id.
+Autenticacao: publica, mas o acesso pode depender do forum.
+Path params:
+- id: identificador do topico.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-do-topico",
+  "forumId": "uuid-do-forum",
+  "autorId": "uuid-do-autor",
+  "titulo": "Duvida sobre Spring Boot",
+  "conteudo": "Como funciona injecao de dependencias?",
+  "score": 10,
+  "dataCriacao": "2026-07-03T20:30:00"
+}
+
+5.3 GET /api/foruns/{forumId}/topicos
+-------------------------------------
+Descricao: lista topicos de um forum.
+Autenticacao: publica, mas o acesso pode depender do forum.
+Path params:
+- forumId: identificador do forum.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "id": "uuid-do-topico",
+    "forumId": "uuid-do-forum",
+    "autorId": "uuid-do-autor",
+    "titulo": "Duvida sobre Spring Boot",
+    "conteudo": "Como funciona injecao de dependencias?",
+    "score": 10,
+    "dataCriacao": "2026-07-03T20:30:00"
+  }
+]
+
+
+6. COMENTARIOS
+==============
+
+6.1 POST /api/topicos/{topicoId}/comentarios
+--------------------------------------------
+Descricao: cria comentario em um topico. Pode responder outro comentario.
+Autenticacao: obrigatoria.
+Permissao: INSCRITO, CRIADOR, REVISOR ou MASTER.
+Path params:
+- topicoId: identificador do topico.
+Status de sucesso: 201 CREATED.
+
+Request JSON:
+{
+  "texto": "Boa pergunta!",
+  "comentarioPaiId": null
+}
+
+Regras do request:
+- texto: obrigatorio.
+- comentarioPaiId: opcional. Quando enviado, cria resposta ao comentario pai.
+
+Response JSON:
+{
+  "id": "uuid-do-comentario",
+  "topicoId": "uuid-do-topico",
+  "autorId": "uuid-do-autor",
+  "comentarioPaiId": null,
+  "texto": "Boa pergunta!",
+  "score": 0,
+  "dataCriacao": "2026-07-03T20:30:00",
+  "respostas": []
+}
+
+6.2 GET /api/topicos/{topicoId}/comentarios/arvore
+--------------------------------------------------
+Descricao: lista comentarios de um topico em formato de arvore.
+Autenticacao: publica, mas acesso pode depender do topico/forum.
+Path params:
+- topicoId: identificador do topico.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "id": "uuid-comentario-1",
+    "topicoId": "uuid-do-topico",
+    "autorId": "uuid-do-autor",
+    "comentarioPaiId": null,
+    "texto": "Comentario principal",
+    "score": 2,
+    "dataCriacao": "2026-07-03T20:30:00",
+    "respostas": [
+      {
+        "id": "uuid-comentario-2",
+        "topicoId": "uuid-do-topico",
+        "autorId": "uuid-do-autor-2",
+        "comentarioPaiId": "uuid-comentario-1",
+        "texto": "Resposta ao comentario",
+        "score": 1,
+        "dataCriacao": "2026-07-03T20:35:00",
+        "respostas": []
+      }
+    ]
+  }
+]
+
+6.3 DELETE /api/comentarios/{id}
+--------------------------------
+Descricao: apaga um comentario.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador do comentario.
+Status de sucesso: 204 NO CONTENT.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+Nao devolve body.
+
+
+7. VOTOS
+========
+
+7.1 POST /api/votos
+-------------------
+Descricao: vota em um topico ou comentario.
+Autenticacao: obrigatoria.
+Permissao: INSCRITO, CRIADOR, REVISOR ou MASTER.
+Status de sucesso: 200 OK.
+
+Request JSON:
+{
+  "entidadeId": "uuid-do-topico-ou-comentario",
+  "tipoEntidade": "TOPICO",
+  "tipoVoto": "UP"
+}
+
+Regras do request:
+- entidadeId: obrigatorio.
+- tipoEntidade: obrigatorio. Valores: TOPICO, COMENTARIO.
+- tipoVoto: obrigatorio. Valores: UP, DOWN.
+
+Response JSON:
+{
+  "entidadeId": "uuid-do-topico-ou-comentario",
+  "tipoEntidade": "TOPICO",
+  "votoAtual": "UP",
+  "score": 11
+}
+
+Como funciona:
+- O voto atual do utilizador fica registado para a entidade.
+- O score retornado e a pontuacao atual da entidade depois do voto.
+
+
+8. SUBSCRICOES
+==============
+
+8.1 POST /api/subscricoes
+-------------------------
+Descricao: cria uma subscricao em conteudo ou forum.
+Autenticacao: obrigatoria.
+Permissao: INSCRITO, CRIADOR, REVISOR ou MASTER.
+Status de sucesso: 201 CREATED.
+
+Request JSON para conteudo:
+{
+  "conteudoId": "uuid-do-conteudo",
+  "forumId": null
+}
+
+Request JSON para forum:
+{
+  "conteudoId": null,
+  "forumId": "uuid-do-forum"
+}
+
+Regras do request:
+- Informe conteudoId ou forumId.
+- Nao informe os dois ao mesmo tempo.
+
+Response JSON:
+{
+  "id": "uuid-da-subscricao",
+  "conteudoId": "uuid-do-conteudo",
+  "forumId": null,
+  "ativo": true,
+  "dataInicio": "2026-07-03T20:30:00"
+}
+
+8.2 GET /api/subscricoes/minhas
+-------------------------------
+Descricao: lista as subscricoes do utilizador autenticado.
+Autenticacao: obrigatoria.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "id": "uuid-da-subscricao",
+    "conteudoId": "uuid-do-conteudo",
+    "forumId": null,
+    "ativo": true,
+    "dataInicio": "2026-07-03T20:30:00"
+  }
+]
+
+
+9. QUIZ - REST
+==============
+
+9.1 POST /api/quiz/salas
+------------------------
+Descricao: cria uma sala de quiz.
+Autenticacao: obrigatoria.
+Status de sucesso: 201 CREATED.
+
+Request JSON:
+{
+  "forumId": "uuid-do-forum",
+  "conteudoId": "uuid-do-conteudo",
+  "limiteUtilizadores": 30,
+  "tempoLimiteMs": 60000,
+  "pontosBase": 10
+}
+
+Regras do request:
+- forumId: obrigatorio.
+- conteudoId: opcional.
+- limiteUtilizadores: opcional, minimo 1 quando enviado.
+- tempoLimiteMs: obrigatorio, minimo 1000.
+- pontosBase: obrigatorio, minimo 1.
+
+Response JSON:
+{
+  "id": "uuid-da-sala",
+  "forumId": "uuid-do-forum",
+  "conteudoId": "uuid-do-conteudo",
+  "limiteUtilizadores": 30,
+  "tempoLimiteMs": 60000,
+  "pontosBase": 10,
+  "estado": "AGUARDANDO"
+}
+
+9.2 POST /api/quiz/salas/{id}/perguntas
+---------------------------------------
+Descricao: adiciona pergunta a uma sala de quiz.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador da sala.
+Status de sucesso: 201 CREATED.
+
+Request JSON:
+{
+  "enunciado": "Qual linguagem roda na JVM?",
+  "alternativas": ["Java", "HTML", "CSS", "SQL"],
+  "respostaCorreta": "Java",
+  "ordem": 1
+}
+
+Regras do request:
+- enunciado: obrigatorio.
+- alternativas: obrigatorio, lista nao vazia.
+- respostaCorreta: obrigatorio.
+- ordem: obrigatorio.
+
+Response JSON:
+{
+  "id": "uuid-da-pergunta",
+  "salaId": "uuid-da-sala",
+  "enunciado": "Qual linguagem roda na JVM?",
+  "alternativas": ["Java", "HTML", "CSS", "SQL"],
+  "ordem": 1,
+  "tempoLimiteMs": 60000
+}
+
+Observacao:
+- A respostaCorreta entra apenas no request de criacao e nao aparece no response publico.
+
+9.3 POST /api/quiz/salas/{id}/entrar
+------------------------------------
+Descricao: entra em uma sala de quiz.
+Autenticacao: obrigatoria.
+Permissao: INSCRITO, CRIADOR, REVISOR ou MASTER.
+Path params:
+- id: identificador da sala.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-da-sala",
+  "forumId": "uuid-do-forum",
+  "conteudoId": "uuid-do-conteudo",
+  "limiteUtilizadores": 30,
+  "tempoLimiteMs": 60000,
+  "pontosBase": 10,
+  "estado": "AGUARDANDO"
+}
+
+9.4 POST /api/quiz/salas/{id}/iniciar
+-------------------------------------
+Descricao: inicia uma sala de quiz.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador da sala.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-da-sala",
+  "forumId": "uuid-do-forum",
+  "conteudoId": "uuid-do-conteudo",
+  "limiteUtilizadores": 30,
+  "tempoLimiteMs": 60000,
+  "pontosBase": 10,
+  "estado": "EM_ANDAMENTO"
+}
+
+9.5 POST /api/quiz/salas/{id}/finalizar
+---------------------------------------
+Descricao: finaliza uma sala de quiz.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador da sala.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-da-sala",
+  "forumId": "uuid-do-forum",
+  "conteudoId": "uuid-do-conteudo",
+  "limiteUtilizadores": 30,
+  "tempoLimiteMs": 60000,
+  "pontosBase": 10,
+  "estado": "FINALIZADA"
+}
+
+9.6 GET /api/quiz/salas/{id}/perguntas
+--------------------------------------
+Descricao: lista perguntas publicas da sala.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador da sala.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "id": "uuid-da-pergunta",
+    "salaId": "uuid-da-sala",
+    "enunciado": "Qual linguagem roda na JVM?",
+    "alternativas": ["Java", "HTML", "CSS", "SQL"],
+    "ordem": 1,
+    "tempoLimiteMs": 60000
+  }
+]
+
+9.7 GET /api/quiz/salas/{id}/ranking
+------------------------------------
+Descricao: lista ranking da sala.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador da sala.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "utilizadorId": "uuid-do-utilizador",
+    "pontuacao": 30
+  }
+]
+
+
+10. QUIZ - WEBSOCKET/STOMP
+==========================
+
+Endpoint WebSocket configurado:
+- /ws
+
+10.1 Cliente envia resposta
+---------------------------
+Destino STOMP:
+/app/quiz/{salaId}/responder
+
+Descricao: envia a resposta de uma pergunta do quiz.
+Autenticacao: o userId e obtido da sessao WebSocket pelo backend.
+
+Payload enviado pelo cliente:
+{
+  "perguntaId": "uuid-da-pergunta",
+  "resposta": "Java",
+  "tempoGastoMs": 12000
+}
+
+Regras do payload:
+- perguntaId: obrigatorio.
+- resposta: obrigatorio.
+- tempoGastoMs: obrigatorio.
+
+10.2 Resposta individual enviada pelo servidor
+----------------------------------------------
+Destino STOMP para o utilizador:
+/user/queue/quiz/respostas
+
+Payload recebido:
+{
+  "perguntaId": "uuid-da-pergunta",
+  "correta": true,
+  "pontos": 10,
+  "pontuacaoAcumulada": 30
+}
+
+Como funciona:
+- Depois de responder, o backend calcula se esta correta, quantos pontos ganhou e a pontuacao acumulada.
+
+10.3 Ranking em tempo real enviado pelo servidor
+------------------------------------------------
+Destino STOMP publico da sala:
+/topic/quiz/{salaId}/ranking
+
+Payload recebido:
+[
+  {
+    "utilizadorId": "uuid-do-utilizador",
+    "pontuacao": 30
+  }
+]
+
+Como funciona:
+- Depois de cada resposta, o backend publica o ranking atualizado da sala.
+
+
+11. RANKINGS
+============
+
+11.1 GET /api/rankings/regioes
+------------------------------
+Descricao: ranking agregado por regiao.
+Autenticacao: publica.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "chave": "Luanda",
+    "pontos": 250
+  }
+]
+
+11.2 GET /api/rankings/instituicoes
+-----------------------------------
+Descricao: ranking agregado por instituicao.
+Autenticacao: publica.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "chave": "ISPTEC",
+    "pontos": 500
+  }
+]
+
+
+12. RECOMENDACOES
+=================
+
+12.1 GET /api/recomendacoes
+---------------------------
+Descricao: lista recomendacoes para o utilizador autenticado.
+Autenticacao: obrigatoria.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "conteudo": {
+      "id": "uuid-do-conteudo",
+      "titulo": "Introducao a Java",
+      "descricao": "Aula inicial sobre Java",
+      "tipo": "VIDEO",
+      "categoria": "Programacao",
+      "tags": ["java", "backend"],
+      "urlMidia": "https://exemplo.com/video.mp4",
+      "corpoTexto": null,
+      "approved": true,
+      "exclusivo": false,
+      "autorId": "uuid-do-autor",
+      "dataCriacao": "2026-07-03T20:30:00"
+    },
+    "motivo": "Baseado nos seus interesses"
+  }
+]
+
+
+13. NOTIFICACOES
+================
+
+13.1 GET /api/notificacoes
+--------------------------
+Descricao: lista notificacoes do utilizador autenticado.
+Autenticacao: obrigatoria.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+[
+  {
+    "id": "uuid-da-notificacao",
+    "destinatarioId": "uuid-do-destinatario",
+    "remetenteId": "uuid-do-remetente",
+    "tipoEvento": "COMENTARIO",
+    "mensagem": "Novo comentario no seu topico",
+    "entidadeAlvoId": "uuid-da-entidade",
+    "lida": false,
+    "dataCriacao": "2026-07-03T20:30:00"
+  }
+]
+
+13.2 PATCH /api/notificacoes/{id}/lida
+--------------------------------------
+Descricao: marca uma notificacao como lida.
+Autenticacao: obrigatoria.
+Path params:
+- id: identificador da notificacao.
+Status de sucesso: 200 OK.
+
+Request JSON:
+Nao tem body.
+
+Response JSON:
+{
+  "id": "uuid-da-notificacao",
+  "destinatarioId": "uuid-do-destinatario",
+  "remetenteId": "uuid-do-remetente",
+  "tipoEvento": "COMENTARIO",
+  "mensagem": "Novo comentario no seu topico",
+  "entidadeAlvoId": "uuid-da-entidade",
+  "lida": true,
+  "dataCriacao": "2026-07-03T20:30:00"
+}
+
+
+14. RECUPERACAO DE CONTA
+========================
+
+14.1 POST /api/recuperacao/solicitar
+------------------------------------
+Descricao: solicita envio/geracao de codigo OTP para recuperacao de conta.
+Autenticacao: publica.
+Status de sucesso: 200 OK.
+
+Request JSON:
+{
+  "email": "user@email.com"
+}
+
+Regras do request:
+- email: obrigatorio, formato de email.
+
+Response JSON:
+{
+  "mensagem": "Codigo de recuperacao enviado"
+}
+
+14.2 POST /api/recuperacao/validar
+----------------------------------
+Descricao: valida um codigo OTP de 6 digitos.
+Autenticacao: publica.
+Status de sucesso: 200 OK.
+
+Request JSON:
+{
+  "email": "user@email.com",
+  "codigo": "123456"
+}
+
+Regras do request:
+- email: obrigatorio, formato de email.
+- codigo: precisa ter exatamente 6 digitos.
+
+Response JSON:
+{
+  "mensagem": "Codigo valido"
+}
+
+14.3 POST /api/recuperacao/redefinir-senha
+------------------------------------------
+Descricao: redefine a senha usando email e codigo OTP.
+Autenticacao: publica.
+Status de sucesso: 200 OK.
+
+Request JSON:
+{
+  "email": "user@email.com",
+  "codigo": "123456",
+  "novaSenha": "novaSenha123"
+}
+
+Regras do request:
+- email: obrigatorio, formato de email.
+- codigo: precisa ter exatamente 6 digitos.
+- novaSenha: obrigatoria, minimo 8 e maximo 100 caracteres.
+
+Response JSON:
+{
+  "mensagem": "Senha redefinida com sucesso"
+}
+
+
+15. TIPOS AUXILIARES
+====================
+
+15.1 PageResponse<T>
+--------------------
+Formato generico de resposta paginada disponivel no projeto:
+{
+  "content": [],
+  "page": 0,
+  "size": 10,
+  "totalElements": 100,
+  "totalPages": 10
+}
+
+Observacao:
+- Nenhum controller atual usa PageResponse diretamente nos mappings listados acima, mas o DTO existe em common/dto.
+
+15.2 ApiErrorResponse
+---------------------
+Formato usado pelo GlobalExceptionHandler para erros:
+{
+  "codigo": "RESOURCE_NOT_FOUND",
+  "mensagem": "Conteudo nao encontrado",
+  "timestamp": "2026-07-03T20:30:00",
+  "path": "/api/conteudos/id-inexistente",
+  "detalhes": []
+}
+
+
+RESUMO RAPIDO DOS MAPPINGS
+==========================
+
+AUTH
+- POST   /api/auth/register
+- POST   /api/auth/login
+- GET    /api/auth/me
+
+USUARIOS
+- GET    /api/usuarios/{id}
+- PATCH  /api/usuarios/{id}/role
+
+CONTEUDOS
+- POST   /api/conteudos
+- GET    /api/conteudos
+- GET    /api/conteudos/{id}
+- PATCH  /api/conteudos/{id}/aprovar
+
+FORUNS
+- POST   /api/foruns
+- GET    /api/foruns
+- GET    /api/foruns/{id}
+- POST   /api/foruns/{id}/membros
+- DELETE /api/foruns/{id}/membros/{membroId}
+- PATCH  /api/foruns/{id}/membros/{membroId}/fala
+
+TOPICOS
+- POST   /api/topicos
+- GET    /api/topicos/{id}
+- GET    /api/foruns/{forumId}/topicos
+
+COMENTARIOS
+- POST   /api/topicos/{topicoId}/comentarios
+- GET    /api/topicos/{topicoId}/comentarios/arvore
+- DELETE /api/comentarios/{id}
+
+VOTOS
+- POST   /api/votos
+
+SUBSCRICOES
+- POST   /api/subscricoes
+- GET    /api/subscricoes/minhas
+
+QUIZ REST
+- POST   /api/quiz/salas
+- POST   /api/quiz/salas/{id}/perguntas
+- POST   /api/quiz/salas/{id}/entrar
+- POST   /api/quiz/salas/{id}/iniciar
+- POST   /api/quiz/salas/{id}/finalizar
+- GET    /api/quiz/salas/{id}/perguntas
+- GET    /api/quiz/salas/{id}/ranking
+
+QUIZ WEBSOCKET
+- WebSocket endpoint: /ws
+- SEND /app/quiz/{salaId}/responder
+- SUBSCRIBE /user/queue/quiz/respostas
+- SUBSCRIBE /topic/quiz/{salaId}/ranking
+
+RANKINGS
+- GET    /api/rankings/regioes
+- GET    /api/rankings/instituicoes
+
+RECOMENDACOES
+- GET    /api/recomendacoes
+
+NOTIFICACOES
+- GET    /api/notificacoes
+- PATCH  /api/notificacoes/{id}/lida
+
+RECUPERACAO
+- POST   /api/recuperacao/solicitar
+- POST   /api/recuperacao/validar
+- POST   /api/recuperacao/redefinir-senha
+
+CORRECOES FINAIS 2026-07-09
+---------------------------
+- Recuperacao de conta: removido retorno inseguro do OTP quando SMTP falha ou nao esta configurado. Agora a API retorna erro sem expor codigo.
+- SMTP: adicionadas propriedades de auth e STARTTLS em application.yml.
+- Quiz: reentrar numa sala reinicia pontuacao da sala e remove respostas antigas do utilizador, permitindo repetir quiz.
+- Quiz: sala FINALIZADA pode ser jogada novamente; ao responder volta para EM_ANDAMENTO.
+- Conteudos: adicionados campos bilingues opcionais tituloEn, descricaoEn e corpoTextoEn em request/response/API/frontend.
+- Topicos: adicionada censura por Master em PATCH /api/topicos/{id}/censurar?censurado=true|false e campo censurado no TopicoResponse.
+- Frontend: adicionados botoes de voltar em telas necessarias e acao visual de censura para Master no detalhe do topico.

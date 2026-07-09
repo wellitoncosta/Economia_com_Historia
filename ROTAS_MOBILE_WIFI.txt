@@ -1,0 +1,147 @@
+ROTAS E CONFIGURACAO PARA APP MOBILE - ECONOMIA COM HISTORIA
+============================================================
+
+Base URL no telemovel:
+http://IP_DO_LAPTOP:8080
+
+Para descobrir o IP do laptop, rode no PowerShell:
+ipconfig
+
+Use o Endereco IPv4 do adaptador Wi-Fi. Exemplo:
+http://192.168.1.25:8080
+
+Comandos principais
+-------------------
+Backend:
+cd C:\Users\Wellington\Downloads\projecto-final\backend
+$env:SMTP_USERNAME="seu-email@gmail.com"
+$env:SMTP_PASSWORD="sua-senha-de-app-do-gmail"
+$env:CORS_ALLOWED_ORIGINS="http://localhost:3000,http://192.168.1.25:3000"
+mvn spring-boot:run
+
+Frontend:
+cd C:\Users\Wellington\Downloads\projecto-final\frontend
+$env:NEXT_PUBLIC_API_URL="http://192.168.1.25:8080"
+npm run dev
+
+Autenticacao
+------------
+POST /api/auth/register
+POST /api/auth/login
+GET /api/auth/me
+
+Rotas protegidas usam:
+Authorization: Bearer SEU_TOKEN
+Content-Type: application/json
+Accept: application/json
+
+Recuperacao de conta
+--------------------
+POST /api/recuperacao/solicitar
+Body: {"email":"user@email.com"}
+
+POST /api/recuperacao/validar
+Body: {"email":"user@email.com","codigo":"123456"}
+
+POST /api/recuperacao/redefinir-senha
+Body: {"email":"user@email.com","codigo":"123456","novaSenha":"novaSenha123"}
+
+A API nunca devolve o codigo OTP no JSON.
+
+Conteudos
+---------
+GET /api/conteudos
+GET /api/conteudos/{id}
+
+POST /api/conteudos
+Roles: CRIADOR, REVISOR, MASTER.
+Body:
+{
+  "titulo": "Titulo em Portugues",
+  "tituloEn": "English title",
+  "descricao": "Resumo em Portugues",
+  "descricaoEn": "English summary",
+  "tipo": "TEXTO",
+  "categoria": "Economia",
+  "tags": ["historia", "angola"],
+  "urlMidia": null,
+  "corpoTexto": "Texto em Portugues",
+  "corpoTextoEn": "English body",
+  "exclusivo": false
+}
+
+PATCH /api/conteudos/{id}/aprovar?aprovado=true|false
+Roles: REVISOR, MASTER.
+
+Foruns e topicos
+----------------
+GET /api/foruns
+GET /api/foruns/{id}
+POST /api/foruns
+GET /api/foruns/{forumId}/topicos
+
+POST /api/topicos
+Roles: INSCRITO, CRIADOR, REVISOR, MASTER.
+Body: {"forumId":"id-do-forum","titulo":"Titulo","conteudo":"Texto do topico"}
+
+GET /api/topicos/{id}
+PATCH /api/topicos/{id}/censurar?censurado=true|false
+Role: MASTER.
+
+Comentarios e votos
+-------------------
+GET /api/topicos/{topicoId}/comentarios/arvore
+POST /api/topicos/{topicoId}/comentarios
+Publica. Visitante pode comentar.
+Body: {"texto":"Comentario","comentarioPaiId":null}
+
+DELETE /api/comentarios/{id}
+
+POST /api/votos
+Protegida. Visitante nao pode votar.
+Body: {"entidadeId":"id","tipoEntidade":"TOPICO","tipoVoto":"UP"}
+
+Quiz
+----
+GET /api/quiz/salas
+POST /api/quiz/salas
+Body: {"forumId":"id-do-forum","conteudoId":null,"limiteUtilizadores":30,"tempoLimiteMs":30000,"pontosBase":100}
+
+POST /api/quiz/salas/{id}/perguntas
+Body: {"enunciado":"Pergunta?","alternativas":["A","B","C","D"],"respostaCorreta":"A","ordem":1}
+
+POST /api/quiz/salas/{id}/entrar
+Publica. Visitante pode entrar. Reentrar reinicia pontuacao da sala.
+
+POST /api/quiz/salas/{id}/iniciar
+POST /api/quiz/salas/{id}/finalizar
+GET /api/quiz/salas/{id}/perguntas
+GET /api/quiz/salas/{id}/ranking
+
+POST /api/quiz/salas/{id}/responder
+Publica.
+Body: {"perguntaId":"id-da-pergunta","resposta":"A","tempoGastoMs":12000}
+
+Rankings e recomendacoes
+------------------------
+GET /api/rankings/regioes
+GET /api/rankings/instituicoes
+GET /api/recomendacoes
+
+Usuarios
+--------
+GET /api/usuarios/{id}
+PATCH /api/usuarios/{id}/role
+Body: {"role":"REVISOR"}
+PATCH /api/usuarios/me
+Body: {"regiao":"Luanda","instituicao":"ISPTEC"}
+PATCH /api/usuarios/me/senha
+Body: {"senhaAtual":"senhaAntiga","novaSenha":"novaSenha123"}
+
+Subscricoes e notificacoes
+--------------------------
+POST /api/subscricoes
+Body: {"conteudoId":"id-ou-null","forumId":null}
+GET /api/subscricoes/minhas
+GET /api/notificacoes
+PATCH /api/notificacoes/{id}/lida

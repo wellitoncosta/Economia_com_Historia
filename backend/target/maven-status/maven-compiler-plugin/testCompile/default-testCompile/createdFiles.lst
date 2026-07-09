@@ -1,0 +1,4 @@
+com\plataforma\quiz\service\QuizEngineServiceTest.class
+com\plataforma\auth\service\AuthServiceImplTest.class
+com\plataforma\recuperacaoconta\service\RecuperacaoContaServiceImplTest.class
+com\plataforma\voto\service\VotoServiceImplTest.class
