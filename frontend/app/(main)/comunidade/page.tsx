@@ -54,15 +54,17 @@ export default function ForunsPage() {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <header className="flex flex-col gap-4 md:pt-8">
         <div className="space-y-1">
           <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary">Foruns</h1>
           <p className="text-on-surface-variant">Escolha um forum para ver e debater os seus topicos.</p>
         </div>
         {isRegistered && (
-          <Button size="lg" variant="secondary" onClick={() => setShowCreate((value) => !value)}>
-            <Plus className="w-4 h-4 mr-2" /> Criar Forum
-          </Button>
+          <div className="flex justify-start">
+            <Button size="lg" variant="secondary" onClick={() => setShowCreate((value) => !value)}>
+              <Plus className="w-4 h-4 mr-2" /> Criar Forum
+            </Button>
+          </div>
         )}
       </header>
 

@@ -63,15 +63,17 @@ export default function QuizHubPage() {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="flex flex-col gap-4 md:pt-8">
         <div className="space-y-2">
           <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary">Salas de Quiz</h1>
           <p className="text-on-surface-variant">Entre numa sala activa ou crie uma nova para testar conhecimentos.</p>
         </div>
         {isRegistered && (
-          <Button size="lg" variant="secondary" asChild>
-            <Link href="/quiz/novo"><Plus className="w-4 h-4 mr-2" /> Criar Quiz</Link>
-          </Button>
+          <div className="flex justify-start">
+            <Button size="lg" variant="secondary" asChild>
+              <Link href="/quiz/novo"><Plus className="w-4 h-4 mr-2" /> Criar Quiz</Link>
+            </Button>
+          </div>
         )}
       </header>
 

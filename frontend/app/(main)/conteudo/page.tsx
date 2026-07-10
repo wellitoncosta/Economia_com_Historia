@@ -46,15 +46,17 @@ export default function ExplorarPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <header className="space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <header className="space-y-4 md:pt-8">
+        <div className="flex flex-col gap-3">
           <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary">Explorar Acervo</h1>
           {(role === 'MASTER' || role === 'CRIADOR' || role === 'REVISOR') && (
-            <Button variant="secondary" asChild>
-              <Link href="/admin/conteudos/novo">
-                <Plus className="w-4 h-4 mr-2" /> Publicar Artigo
-              </Link>
-            </Button>
+            <div className="flex justify-start">
+              <Button variant="secondary" asChild>
+                <Link href="/admin/conteudos/novo">
+                  <Plus className="w-4 h-4 mr-2" /> Publicar Artigo
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
 
