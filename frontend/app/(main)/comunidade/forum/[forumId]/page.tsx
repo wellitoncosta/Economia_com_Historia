@@ -5,9 +5,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { AlertTriangle, ArrowDown, ArrowLeft, ArrowUp, Flame, Lock, MessageCircle, Plus } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowLeft, ArrowUp, Flame, Lock, MessageCircle, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { api, getErrorMessage } from '@/lib/api'
+import { hasAnyRole } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Chip } from '@/components/ui/chip'
@@ -20,6 +21,7 @@ export default function ForumTopicosPage() {
   const router = useRouter()
   const { user } = useAuth()
   const isRegistered = user !== null
+  const canVote = hasAnyRole(user?.role, ['INSCRITO', 'CRIADOR', 'REVISOR', 'MASTER'])
   const isModerador = user?.role === 'MASTER' || user?.role === 'REVISOR'
   const canMarkJindungo = user?.role === 'CRIADOR' || user?.role === 'REVISOR' || user?.role === 'MASTER'
 
@@ -73,7 +75,11 @@ export default function ForumTopicosPage() {
   }
 
   const votar = async (topico: Topico, tipoVoto: 'UP' | 'DOWN') => {
-    if (!isRegistered) {
+    if (!canVote) {
+      if (user) {
+        setError('A sua conta nao tem permissao para votar.')
+        return
+      }
       router.push('/')
       return
     }
@@ -89,6 +95,18 @@ export default function ForumTopicosPage() {
     try {
       const atualizado = await api.censurarTopico(topico.id, !topico.censurado)
       setTopicos((current) => current.map((item) => item.id === topico.id ? atualizado : item))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+
+  const apagarTopico = async (topico: Topico) => {
+    if (!user || (user.role !== 'MASTER' && topico.autorId !== user.id)) return
+    if (!window.confirm(`Apagar o topico "${topico.titulo}"?`)) return
+    setError('')
+    try {
+      await api.apagarTopico(topico.id)
+      setTopicos((current) => current.filter((item) => item.id !== topico.id))
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -182,11 +200,11 @@ export default function ForumTopicosPage() {
             <Card key={topico.id} className={`hover:border-primary/30 transition-colors ${isJindungo ? 'border-error/30' : ''}`}>
               <CardContent className="p-0 flex">
                 <div className="bg-surface-container-low w-14 flex flex-col items-center py-4 gap-1.5 rounded-l-xl border-r border-outline-variant">
-                  <button disabled={!isRegistered} onClick={() => votar(topico, 'UP')} className="text-on-surface-variant hover:text-secondary disabled:opacity-40 transition-colors">
+                  <button disabled={!canVote} onClick={() => votar(topico, 'UP')} className="text-on-surface-variant hover:text-secondary disabled:opacity-40 transition-colors">
                     <ArrowUp className="w-5 h-5" />
                   </button>
                   <span className="font-bold text-primary text-sm">{topico.score}</span>
-                  <button disabled={!isRegistered} onClick={() => votar(topico, 'DOWN')} className="text-on-surface-variant hover:text-error disabled:opacity-40 transition-colors">
+                  <button disabled={!canVote} onClick={() => votar(topico, 'DOWN')} className="text-on-surface-variant hover:text-error disabled:opacity-40 transition-colors">
                     <ArrowDown className="w-5 h-5" />
                   </button>
                 </div>
@@ -218,6 +236,12 @@ export default function ForumTopicosPage() {
                         {isJindungo ? 'Remover Jindungo' : 'Marcar Jindungo'}
                       </button>
                     )}
+                    {user && (user.role === 'MASTER' || topico.autorId === user.id) && (
+                      <button onClick={() => apagarTopico(topico)} className="flex items-center gap-1 text-xs font-semibold text-error hover:text-error/80 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Apagar
+                      </button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -229,7 +253,7 @@ export default function ForumTopicosPage() {
       {!isRegistered && (
         <div className="rounded-xl border border-outline-variant bg-surface-container p-4 text-center text-sm text-on-surface-variant">
           <Link href="/" className="text-primary font-semibold hover:underline">Inicie sessao</Link>{' '}
-          para votar, comentar e criar topicos.
+          para votar e criar topicos. Visitantes podem comentar dentro do topico.
         </div>
       )}
     </div>

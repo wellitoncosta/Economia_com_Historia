@@ -62,9 +62,14 @@ public class ForumServiceImpl implements ForumService {
     @Transactional(readOnly = true)
     public List<ForumResponse> listar(UUID userId) {
         if (userId == null) {
-            return forumRepository.findByPrivadoFalse().stream().map(this::toResponse).toList();
+            return forumRepository.findByPrivadoFalse().stream()
+                    .filter(f -> !Boolean.TRUE.equals(f.getOculto()))
+                    .map(this::toResponse)
+                    .toList();
         }
+        boolean master = isMaster();
         return forumRepository.findAll().stream()
+                .filter(f -> master || !Boolean.TRUE.equals(f.getOculto()))
                 .filter(f -> podeAcessarEntity(f, userId.toString()))
                 .map(this::toResponse)
                 .toList();
@@ -74,6 +79,9 @@ public class ForumServiceImpl implements ForumService {
     @Transactional(readOnly = true)
     public ForumResponse obter(String id, UUID userId) {
         Forum forum = getForum(id);
+        if (Boolean.TRUE.equals(forum.getOculto()) && !isMaster() && (userId == null || !forum.getDono().getId().equals(userId.toString()))) {
+            throw new ResourceNotFoundException("Forum nao encontrado");
+        }
         if (!podeAcessarEntity(forum, userId == null ? null : userId.toString())) {
             throw new UnauthorizedActionException("Sem acesso ao forum privado");
         }
@@ -84,7 +92,18 @@ public class ForumServiceImpl implements ForumService {
     @Transactional
     public void apagar(String id, UUID userId) {
         Forum forum = getForum(id);
+        if (userId == null || (!isMaster() && !forum.getDono().getId().equals(userId.toString()))) {
+            throw new UnauthorizedActionException("Apenas o dono ou Master pode apagar o forum");
+        }
         forumRepository.delete(forum);
+    }
+
+    @Override
+    @Transactional
+    public ForumResponse ocultar(String id, boolean oculto, UUID userId) {
+        Forum forum = getForum(id);
+        forum.setOculto(oculto);
+        return toResponse(forumRepository.save(forum));
     }
 
     @Override
@@ -162,6 +181,6 @@ public class ForumServiceImpl implements ForumService {
 
     private ForumResponse toResponse(Forum forum) {
         return new ForumResponse(forum.getId(), forum.getDono().getId(), forum.getNome(), forum.getDescricao(),
-                forum.getPrivado(), forum.getLimiteUtilizadores(), forum.getDataCriacao());
+                forum.getPrivado(), forum.getOculto(), forum.getLimiteUtilizadores(), forum.getDataCriacao());
     }
 }

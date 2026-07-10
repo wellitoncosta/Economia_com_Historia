@@ -90,7 +90,16 @@ public class TopicoServiceImpl implements TopicoService {
     @Transactional
     public void apagar(String id, UUID userId) {
         Topico topico = getTopico(id);
+        if (userId == null || (!topico.getAutor().getId().equals(userId.toString()) && !isMaster())) {
+            throw new UnauthorizedActionException("Apenas o autor ou Master pode apagar o topico");
+        }
         topicoRepository.delete(topico);
+    }
+
+    private boolean isMaster() {
+        return org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication() != null &&
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_MASTER"));
     }
 
     @Override

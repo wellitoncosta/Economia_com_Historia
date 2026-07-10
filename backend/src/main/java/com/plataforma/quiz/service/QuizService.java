@@ -22,4 +22,5 @@ public interface QuizService {
     List<PerguntaQuizPayload> perguntasPublicas(String salaId);
     List<RankingSalaResponse> ranking(String salaId);
     void apagarSala(String id);
+    SalaQuizResponse ocultarSala(String id, boolean oculto);
 }

@@ -31,6 +31,8 @@ import com.plataforma.usuario.repository.UtilizadorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +78,11 @@ public class QuizServiceImpl implements QuizService {
     @Override
     @Transactional(readOnly = true)
     public List<SalaQuizResponse> listarSalas() {
-        return salaRepository.findAll().stream().map(this::toSalaResponse).toList();
+        boolean master = isMaster();
+        return salaRepository.findAll().stream()
+                .filter(sala -> master || !Boolean.TRUE.equals(sala.getOculto()))
+                .map(this::toSalaResponse)
+                .toList();
     }
 
     @Override
@@ -89,6 +95,8 @@ public class QuizServiceImpl implements QuizService {
                 .orElseThrow(() -> new ResourceNotFoundException("Forum nao encontrado"));
         SalaQuiz sala = new SalaQuiz();
         sala.setForum(forum);
+        sala.setCriador(utilizadorRepository.findById(userId.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Utilizador nao encontrado")));
         sala.setConteudo(request.conteudoId() == null ? null : conteudoRepository.findById(request.conteudoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Conteudo nao encontrado")));
         sala.setLimiteUtilizadores(request.limiteUtilizadores() == null ? Math.max(1, forum.getLimiteUtilizadores()) : request.limiteUtilizadores());
@@ -224,7 +232,19 @@ public class QuizServiceImpl implements QuizService {
     @Transactional
     public void apagarSala(String id) {
         SalaQuiz sala = getSala(id);
+        String currentUserId = currentUserId();
+        if (!isMaster() && (sala.getCriador() == null || !sala.getCriador().getId().equals(currentUserId))) {
+            throw new UnauthorizedActionException("Apenas o criador ou Master pode apagar o quiz");
+        }
         salaRepository.delete(sala);
+    }
+
+    @Override
+    @Transactional
+    public SalaQuizResponse ocultarSala(String id, boolean oculto) {
+        SalaQuiz sala = getSala(id);
+        sala.setOculto(oculto);
+        return toSalaResponse(salaRepository.save(sala));
     }
 
     private SalaQuiz assertModeradorSala(String salaId, UUID userId) {
@@ -253,7 +273,22 @@ public class QuizServiceImpl implements QuizService {
     private SalaQuizResponse toSalaResponse(SalaQuiz sala) {
         return new SalaQuizResponse(sala.getId(), sala.getForum().getId(),
                 sala.getConteudo() == null ? null : sala.getConteudo().getId(),
-                sala.getLimiteUtilizadores(), sala.getTempoLimiteMs(), sala.getPontosBase(), sala.getEstado());
+                sala.getLimiteUtilizadores(), sala.getTempoLimiteMs(), sala.getPontosBase(), sala.getEstado(),
+                sala.getCriador() == null ? null : sala.getCriador().getId(),
+                sala.getCriador() == null ? null : sala.getCriador().getEmail(),
+                sala.getOculto());
+    }
+
+    private boolean isMaster() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MASTER"));
+    }
+
+    private String currentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return null;
+        Object principal = auth.getPrincipal();
+        return principal == null ? null : principal.toString();
     }
 
     private PerguntaQuizPayload toPublicPayload(PerguntaQuiz pergunta) {

@@ -13,6 +13,7 @@ public interface ForumService {
     List<ForumResponse> listar(UUID userId);
     ForumResponse obter(String id, UUID userId);
     void apagar(String id, UUID userId);
+    ForumResponse ocultar(String id, boolean oculto, UUID userId);
     void adicionarMembro(String forumId, AdicionarMembroRequest request, UUID userId);
     void removerMembro(String forumId, String membroId, UUID userId);
     void alterarPermissaoFala(String forumId, String membroId, PermissaoFalaRequest request, UUID userId);

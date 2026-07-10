@@ -8,5 +8,6 @@ import java.util.UUID;
 
 public interface SubscricaoService {
     SubscricaoResponse criar(SubscricaoRequest request, UUID userId);
+    void cancelar(String id, UUID userId);
     List<SubscricaoResponse> minhas(UUID userId);
 }

@@ -8,6 +8,7 @@ public record ForumResponse(
         String nome,
         String descricao,
         Boolean privado,
+        Boolean oculto,
         Integer limiteUtilizadores,
         LocalDateTime dataCriacao
 ) {

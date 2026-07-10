@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Flame, Lock, Plus, Users } from 'lucide-react'
+import { ChevronRight, Flame, Lock, Plus, Trash2, Users } from 'lucide-react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { api, getErrorMessage } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -52,6 +52,18 @@ export default function ForunsPage() {
     }
   }
 
+  const apagarForum = async (forum: Forum) => {
+    if (!user || forum.donoId !== user.id) return
+    if (!window.confirm(`Apagar o forum "${forum.nome}"?`)) return
+    setError('')
+    try {
+      await api.apagarForum(forum.id)
+      setForuns((current) => current.filter((item) => item.id !== forum.id))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col gap-4 md:pt-8">
@@ -94,9 +106,9 @@ export default function ForunsPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {foruns.map((forum, index) => (
-          <Link key={forum.id} href={`/comunidade/forum/${forum.id}`}>
-            <Card className="hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer h-full">
-              <CardContent className="p-5 flex items-center gap-4">
+          <Card key={forum.id} className="hover:border-primary/40 hover:shadow-sm transition-all h-full">
+            <CardContent className="p-5 flex items-center gap-4">
+              <Link href={`/comunidade/forum/${forum.id}`} className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 relative">
                   {index === 0 ? <Flame className="w-6 h-6 text-secondary" /> : <Users className="w-6 h-6 text-primary" />}
                   {forum.privado && (
@@ -114,9 +126,20 @@ export default function ForunsPage() {
                   </p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-on-surface-variant shrink-0" />
-              </CardContent>
-            </Card>
-          </Link>
+              </Link>
+              {user?.id === forum.donoId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-error/40 text-error hover:bg-error/10 shrink-0"
+                  onClick={() => apagarForum(forum)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         ))}
       </div>
 

@@ -96,8 +96,11 @@ public class ConteudoServiceImpl implements ConteudoService {
 
     @Override
     @Transactional
-    public void apagar(String id) {
+    public void apagar(String id, UUID userId) {
         Conteudo conteudo = getConteudo(id);
+        if (userId == null || (!isMaster() && !conteudo.getAutor().getId().equals(userId.toString()))) {
+            throw new UnauthorizedActionException("Apenas o autor ou Master pode apagar o conteudo");
+        }
         conteudoRepository.delete(conteudo);
     }
 

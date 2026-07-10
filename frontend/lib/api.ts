@@ -128,6 +128,7 @@ export const api = {
     apiFetch<void>(`/api/foruns/${forumId}/membros/${membroId}/fala`, { method: 'PATCH', body }),
   minhasSubscricoes: () => apiFetch<Subscricao[]>('/api/subscricoes/minhas'),
   subscrever: (body: { conteudoId?: string | null; forumId?: string | null }) => apiFetch<Subscricao>('/api/subscricoes', { method: 'POST', body }),
+  cancelarSubscricao: (id: string) => apiFetch<void>(`/api/subscricoes/${id}`, { method: 'DELETE' }),
   criarSala: (body: { forumId: string; conteudoId?: string | null; limiteUtilizadores?: number; tempoLimiteMs: number; pontosBase: number }) =>
     apiFetch<SalaQuiz>('/api/quiz/salas', { method: 'POST', body }),
   salas: (query?: { forumId?: string; estado?: string }) => apiFetch<SalaQuiz[]>('/api/quiz/salas', { query }),
@@ -147,9 +148,13 @@ export const api = {
   alterarRole: (id: string, role: Role) => apiFetch<Utilizador>(`/api/usuarios/${id}/role`, { method: 'PATCH', body: { role } }),
   listarUtilizadores: () => apiFetch<Utilizador[]>('/api/usuarios'),
   apagarForum: (id: string) => apiFetch<void>(`/api/foruns/${id}`, { method: 'DELETE' }),
+  ocultarForum: (id: string, oculto: boolean) =>
+    apiFetch<Forum>(`/api/foruns/${id}/ocultar`, { method: 'PATCH', query: { oculto } }),
   apagarTopico: (id: string) => apiFetch<void>(`/api/topicos/${id}`, { method: 'DELETE' }),
   apagarConteudo: (id: string) => apiFetch<void>(`/api/conteudos/${id}`, { method: 'DELETE' }),
   apagarSalaQuiz: (id: string) => apiFetch<void>(`/api/quiz/salas/${id}`, { method: 'DELETE' }),
+  ocultarSalaQuiz: (id: string, oculto: boolean) =>
+    apiFetch<SalaQuiz>(`/api/quiz/salas/${id}/ocultar`, { method: 'PATCH', query: { oculto } }),
   ocultarConteudo: (id: string, aprovado: boolean) =>
     apiFetch<Conteudo>(`/api/conteudos/${id}/aprovar`, { method: 'PATCH', query: { aprovado } }),
 }

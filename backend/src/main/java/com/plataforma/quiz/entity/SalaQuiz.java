@@ -2,6 +2,7 @@ package com.plataforma.quiz.entity;
 
 import com.plataforma.conteudo.entity.Conteudo;
 import com.plataforma.forum.entity.Forum;
+import com.plataforma.usuario.entity.Utilizador;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,6 +28,9 @@ public class SalaQuiz {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conteudo_id")
     private Conteudo conteudo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criador_id")
+    private Utilizador criador;
     @Column(name = "limite_utilizadores", nullable = false)
     private Integer limiteUtilizadores = 1;
     @Column(name = "tempo_limite_ms", nullable = false)
@@ -36,6 +40,8 @@ public class SalaQuiz {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private EstadoSalaQuiz estado = EstadoSalaQuiz.AGUARDANDO;
+    @Column(name = "is_oculto")
+    private Boolean oculto = false;
     @Column(name = "data_criacao", nullable = false)
     private LocalDateTime dataCriacao;
 
@@ -44,6 +50,7 @@ public class SalaQuiz {
         if (id == null) id = UUID.randomUUID().toString();
         if (limiteUtilizadores == null || limiteUtilizadores < 1) limiteUtilizadores = 1;
         if (estado == null) estado = EstadoSalaQuiz.AGUARDANDO;
+        if (oculto == null) oculto = false;
         if (dataCriacao == null) dataCriacao = LocalDateTime.now();
     }
 
@@ -53,6 +60,8 @@ public class SalaQuiz {
     public void setForum(Forum forum) { this.forum = forum; }
     public Conteudo getConteudo() { return conteudo; }
     public void setConteudo(Conteudo conteudo) { this.conteudo = conteudo; }
+    public Utilizador getCriador() { return criador; }
+    public void setCriador(Utilizador criador) { this.criador = criador; }
     public Integer getLimiteUtilizadores() { return limiteUtilizadores; }
     public void setLimiteUtilizadores(Integer limiteUtilizadores) { this.limiteUtilizadores = limiteUtilizadores; }
     public Long getTempoLimiteMs() { return tempoLimiteMs; }
@@ -61,6 +70,8 @@ public class SalaQuiz {
     public void setPontosBase(Integer pontosBase) { this.pontosBase = pontosBase; }
     public EstadoSalaQuiz getEstado() { return estado; }
     public void setEstado(EstadoSalaQuiz estado) { this.estado = estado; }
+    public Boolean getOculto() { return oculto; }
+    public void setOculto(Boolean oculto) { this.oculto = oculto; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
 }

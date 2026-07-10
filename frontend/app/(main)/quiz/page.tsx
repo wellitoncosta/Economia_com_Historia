@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Clock, Play, Plus, Trophy, Users, Zap } from 'lucide-react'
+import { Clock, Play, Plus, Trash2, Trophy, Users, Zap } from 'lucide-react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -59,6 +59,18 @@ export default function QuizHubPage() {
       }
     }
     router.push(`/quiz/${salaId}`)
+  }
+
+  const apagarSala = async (sala: SalaQuiz) => {
+    if (!user || (user.role !== 'MASTER' && sala.criadorId !== user.id)) return
+    if (!window.confirm('Apagar este quiz?')) return
+    setError('')
+    try {
+      await api.apagarSalaQuiz(sala.id)
+      setSalas((current) => current.filter((item) => item.id !== sala.id))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
   }
 
   return (
@@ -158,10 +170,17 @@ export default function QuizHubPage() {
                   </div>
                 </div>
                 {podeEntrar ? (
-                  <Button className="w-full" size="sm" onClick={() => entrar(sala.id)}>
-                    <Play className="w-3 h-3 mr-1" />
-                    {sala.estado === 'FINALIZADA' ? 'Jogar novamente' : isRegistered ? 'Entrar' : 'Jogar como visitante'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button className="flex-1" size="sm" onClick={() => entrar(sala.id)}>
+                      <Play className="w-3 h-3 mr-1" />
+                      {sala.estado === 'FINALIZADA' ? 'Jogar novamente' : isRegistered ? 'Entrar' : 'Jogar como visitante'}
+                    </Button>
+                    {user && (user.role === 'MASTER' || sala.criadorId === user.id) && (
+                      <Button variant="outline" size="sm" className="border-error/40 text-error hover:bg-error/10" onClick={() => apagarSala(sala)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <Button className="w-full" size="sm" variant="outline" asChild>
                     <Link href={`/quiz/${sala.id}`}>Ver Resultados</Link>

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,10 +51,18 @@ public class ForumController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasAnyRole('INSCRITO','CRIADOR','REVISOR','MASTER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void apagar(@PathVariable String id, @AuthenticationPrincipal UUID userId) {
         service.apagar(id, userId);
+    }
+
+    @PatchMapping("/{id}/ocultar")
+    @PreAuthorize("hasRole('MASTER')")
+    public ForumResponse ocultar(@PathVariable String id,
+                                 @RequestParam(defaultValue = "true") boolean oculto,
+                                 @AuthenticationPrincipal UUID userId) {
+        return service.ocultar(id, oculto, userId);
     }
 
     @PostMapping(value = "/{id}/membros", consumes = MediaType.APPLICATION_JSON_VALUE)

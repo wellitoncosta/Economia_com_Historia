@@ -32,6 +32,9 @@ public class Forum {
     @Column(name = "is_privado")
     private Boolean privado = false;
 
+    @Column(name = "is_oculto")
+    private Boolean oculto = false;
+
     @Column(name = "limite_utilizadores", nullable = false)
     private Integer limiteUtilizadores = 1;
 
@@ -43,6 +46,7 @@ public class Forum {
         if (id == null) id = UUID.randomUUID().toString();
         if (limiteUtilizadores == null || limiteUtilizadores < 1) limiteUtilizadores = 1;
         if (privado == null) privado = false;
+        if (oculto == null) oculto = false;
         if (dataCriacao == null) dataCriacao = LocalDateTime.now();
     }
 
@@ -56,6 +60,8 @@ public class Forum {
     public void setDescricao(String descricao) { this.descricao = descricao; }
     public Boolean getPrivado() { return privado; }
     public void setPrivado(Boolean privado) { this.privado = privado; }
+    public Boolean getOculto() { return oculto; }
+    public void setOculto(Boolean oculto) { this.oculto = oculto; }
     public Integer getLimiteUtilizadores() { return limiteUtilizadores; }
     public void setLimiteUtilizadores(Integer limiteUtilizadores) { this.limiteUtilizadores = limiteUtilizadores; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }

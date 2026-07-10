@@ -150,6 +150,16 @@ export default function GerirSistemaPage() {
     }
   )
 
+  const ocultarForum = async (forum: Forum) => {
+    try {
+      const updated = await api.ocultarForum(forum.id, !forum.oculto)
+      setForuns((current) => current.map((item) => item.id === forum.id ? updated : item))
+      showSuccess(`Forum ${updated.oculto ? 'ocultado' : 'publicado'}.`)
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+
   const apagarConteudo = (conteudo: Conteudo) => askConfirm(
     `Apagar o conteudo "${conteudo.titulo}"?`,
     async () => {
@@ -187,6 +197,16 @@ export default function GerirSistemaPage() {
       setConfirm(null)
     }
   )
+
+  const ocultarQuiz = async (quiz: SalaQuiz) => {
+    try {
+      const updated = await api.ocultarSalaQuiz(quiz.id, !quiz.oculto)
+      setQuizzes((current) => current.map((item) => item.id === quiz.id ? updated : item))
+      showSuccess(`Quiz ${updated.oculto ? 'ocultado' : 'publicado'}.`)
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'utilizadores', label: 'Utilizadores', icon: Users },
@@ -299,17 +319,24 @@ export default function GerirSistemaPage() {
         <div className="space-y-3">
           {loadingForuns && <p className="text-sm text-on-surface-variant">A carregar foruns...</p>}
           {foruns.map((forum) => (
-            <Card key={forum.id}>
+            <Card key={forum.id} className={forum.oculto ? 'border-outline-variant opacity-60' : ''}>
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-on-surface truncate">{forum.nome}</p>
                   <p className="text-xs text-on-surface-variant mt-0.5">
                     {forum.privado ? 'Privado' : 'Publico'} - Criado em {new Date(forum.dataCriacao).toLocaleDateString('pt-AO')}
+                    {forum.oculto && <span className="ml-2 text-error font-medium">Oculto</span>}
                   </p>
                 </div>
-                <Button size="sm" variant="outline" className="border-error/40 text-error hover:bg-error/10 gap-1 shrink-0" onClick={() => apagarForum(forum)}>
-                  <Trash2 className="w-3.5 h-3.5" /> Apagar
-                </Button>
+                <div className="flex gap-2 shrink-0">
+                  <Button size="sm" variant="outline" className="gap-1 text-xs border-outline-variant" onClick={() => ocultarForum(forum)}>
+                    {forum.oculto ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    {forum.oculto ? 'Publicar' : 'Ocultar'}
+                  </Button>
+                  <Button size="sm" variant="outline" className="border-error/40 text-error hover:bg-error/10 gap-1 shrink-0" onClick={() => apagarForum(forum)}>
+                    <Trash2 className="w-3.5 h-3.5" /> Apagar
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -351,17 +378,24 @@ export default function GerirSistemaPage() {
         <div className="space-y-3">
           {loadingQuizzes && <p className="text-sm text-on-surface-variant">A carregar quizzes...</p>}
           {quizzes.map((quiz) => (
-            <Card key={quiz.id}>
+            <Card key={quiz.id} className={quiz.oculto ? 'border-outline-variant opacity-60' : ''}>
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-on-surface truncate">{quiz.titulo || `Quiz - ${quiz.id.slice(0, 12)}...`}</p>
                   <p className="text-xs text-on-surface-variant mt-0.5">
                     Estado: {quiz.estado} - {quiz.tempoLimiteMs / 1000}s/pergunta - {quiz.pontosBase} pts base
+                    {quiz.oculto && <span className="ml-2 text-error font-medium">Oculto</span>}
                   </p>
                 </div>
-                <Button size="sm" variant="outline" className="border-error/40 text-error hover:bg-error/10 gap-1 text-xs shrink-0" onClick={() => apagarQuiz(quiz)}>
-                  <Trash2 className="w-3.5 h-3.5" /> Apagar
-                </Button>
+                <div className="flex gap-2 shrink-0">
+                  <Button size="sm" variant="outline" className="gap-1 text-xs border-outline-variant" onClick={() => ocultarQuiz(quiz)}>
+                    {quiz.oculto ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    {quiz.oculto ? 'Publicar' : 'Ocultar'}
+                  </Button>
+                  <Button size="sm" variant="outline" className="border-error/40 text-error hover:bg-error/10 gap-1 text-xs shrink-0" onClick={() => apagarQuiz(quiz)}>
+                    <Trash2 className="w-3.5 h-3.5" /> Apagar
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

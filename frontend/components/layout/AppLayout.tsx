@@ -55,8 +55,8 @@ export function AppLayout({ children, isAdmin = false }: { children: React.React
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row bg-surface">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-primary-container bg-primary text-background px-6 py-6 sticky top-0 h-screen shrink-0">
-        <div className="mb-10">
+      <aside className="hidden md:flex w-64 flex-col border-r border-primary-container bg-primary text-background px-6 py-6 sticky top-0 h-screen shrink-0 overflow-hidden">
+        <div className="mb-6 shrink-0">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 border-2 border-on-primary-container flex items-center justify-center rotate-45 shrink-0">
               <div className="w-4 h-4 bg-on-primary-container"></div>
@@ -66,7 +66,7 @@ export function AppLayout({ children, isAdmin = false }: { children: React.React
           <p className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-70">Angola • Digital Hub</p>
         </div>
         
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 min-h-0 space-y-2 overflow-y-auto pr-1">
           {items.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             return (
@@ -87,15 +87,15 @@ export function AppLayout({ children, isAdmin = false }: { children: React.React
           })}
         </nav>
         
-        <div className="mt-auto pt-4 pb-0 border-t border-primary-container opacity-80">
+        <div className="mt-4 shrink-0 pt-4 pb-0 border-t border-primary-container opacity-80">
           {user ? (
             <Link
               href={isAdmin ? "/admin/perfil" : "/perfil"}
               className="flex items-center gap-3 mb-4 text-background hover:text-on-primary-container transition-colors"
             >
               <div className="w-8 h-8 rounded-full bg-on-primary-container border-2 border-surface-container-lowest shrink-0"></div>
-              <div>
-                <p className="text-xs font-bold">{user.email}</p>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-bold">{user.email}</p>
                 <p className="text-[10px] opacity-70 flex items-center gap-1"><Settings className="w-3 h-3" /> {user.role}</p>
               </div>
             </Link>

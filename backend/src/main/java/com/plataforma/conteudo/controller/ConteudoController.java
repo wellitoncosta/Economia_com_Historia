@@ -59,9 +59,9 @@ public class ConteudoController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasAnyRole('CRIADOR','REVISOR','MASTER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void apagar(@PathVariable String id) {
-        service.apagar(id);
+    public void apagar(@PathVariable String id, @AuthenticationPrincipal UUID userId) {
+        service.apagar(id, userId);
     }
 }

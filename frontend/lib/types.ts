@@ -52,6 +52,7 @@ export interface Forum {
   nome: string
   descricao?: string | null
   privado?: boolean
+  oculto?: boolean
   limiteUtilizadores?: number | null
   dataCriacao: string
 }
@@ -98,7 +99,9 @@ export interface SalaQuiz {
   pontosBase: number
   estado: EstadoSalaQuiz
   titulo?: string | null
+  criadorId?: string | null
   criadorEmail?: string | null
+  oculto?: boolean
 }
 
 export interface PerguntaQuiz {

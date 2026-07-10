@@ -7,11 +7,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Chip } from '@/components/ui/chip'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Share2, Bookmark, Lock } from 'lucide-react'
+import { ArrowLeft, Share2, Heart, Lock, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { useLanguage } from '@/app/contexts/LanguageContext'
 import { api, contentTypeLabel, getErrorMessage } from '@/lib/api'
+import { hasAnyRole } from '@/lib/auth'
 import type { Conteudo } from '@/lib/types'
 
 export default function ConteudoDetalhePage() {
@@ -23,7 +24,9 @@ export default function ConteudoDetalhePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [subscrito, setSubscrito] = useState(false)
+  const [subscricaoId, setSubscricaoId] = useState<string | null>(null)
   const [loadingLike, setLoadingLike] = useState(false)
+  const canLike = hasAnyRole(user?.role, ['INSCRITO', 'CRIADOR', 'REVISOR', 'MASTER'])
 
   useEffect(() => {
     setLoading(true)
@@ -33,6 +36,24 @@ export default function ConteudoDetalhePage() {
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false))
   }, [params.id])
+
+  useEffect(() => {
+    if (!user) {
+      setSubscrito(false)
+      setSubscricaoId(null)
+      return
+    }
+    api.minhasSubscricoes()
+      .then((items) => {
+        const atual = items.find((item) => item.conteudoId === params.id && item.ativo)
+        setSubscrito(!!atual)
+        setSubscricaoId(atual?.id ?? null)
+      })
+      .catch(() => {
+        setSubscrito(false)
+        setSubscricaoId(null)
+      })
+  }, [params.id, user])
   const blocked = !!conteudo?.exclusivo && !user
 
   if (loading) return <p className="text-sm text-on-surface-variant">A carregar conteudo...</p>
@@ -47,14 +68,37 @@ export default function ConteudoDetalhePage() {
       router.push('/')
       return
     }
+    if (!canLike) {
+      setError('A sua conta nao tem permissao para guardar artigos.')
+      return
+    }
     setLoadingLike(true)
     try {
-      await api.subscrever({ conteudoId: conteudo.id })
-      setSubscrito(true)
-    } catch {
-      setSubscrito(true)
+      if (subscrito && subscricaoId) {
+        await api.cancelarSubscricao(subscricaoId)
+        setSubscrito(false)
+        setSubscricaoId(null)
+      } else {
+        const nova = await api.subscrever({ conteudoId: conteudo.id })
+        setSubscrito(true)
+        setSubscricaoId(nova.id)
+      }
+    } catch (err) {
+      setError(getErrorMessage(err))
     } finally {
       setLoadingLike(false)
+    }
+  }
+
+  const apagarConteudo = async () => {
+    if (!user || (user.role !== 'MASTER' && conteudo.autorId !== user.id)) return
+    if (!window.confirm(`Apagar o conteudo "${titulo}"?`)) return
+    setError('')
+    try {
+      await api.apagarConteudo(conteudo.id)
+      router.push('/conteudo')
+    } catch (err) {
+      setError(getErrorMessage(err))
     }
   }
 
@@ -94,12 +138,17 @@ export default function ConteudoDetalhePage() {
             variant={subscrito ? 'secondary' : 'outline'}
             size="icon"
             disabled={loadingLike}
-            title={!user ? 'Inicie sessao para guardar' : subscrito ? 'Guardado' : 'Guardar'}
+            title={!canLike ? 'Inicie sessao com uma conta ativa para gostar' : subscrito ? 'Remover gosto' : 'Gostar do artigo'}
             onClick={toggleLike}
           >
-            <Bookmark className="w-4 h-4" />
+            <Heart className={`w-4 h-4 ${subscrito ? 'fill-current' : ''}`} />
           </Button>
           <Button variant="outline" size="icon"><Share2 className="w-4 h-4" /></Button>
+          {user && (user.role === 'MASTER' || conteudo.autorId === user.id) && (
+            <Button variant="outline" size="icon" className="border-error/40 text-error hover:bg-error/10" onClick={apagarConteudo} title="Apagar conteudo">
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
 

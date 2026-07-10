@@ -5,12 +5,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowDown, ArrowUp, Heart, MessageCircle, Reply, ShieldOff } from 'lucide-react'
+import { ArrowDown, ArrowUp, Heart, MessageCircle, Reply, ShieldOff, Trash2 } from 'lucide-react'
 import { useAuth } from '@/app/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { api, getErrorMessage } from '@/lib/api'
+import { hasAnyRole } from '@/lib/auth'
 import type { Comentario, Topico } from '@/lib/types'
 
 function ComentarioItem({
@@ -62,8 +64,10 @@ function ComentarioItem({
 
 export default function TopicoPage() {
   const { topicoId } = useParams<{ topicoId: string }>()
+  const router = useRouter()
   const { user } = useAuth()
   const isRegistered = user !== null
+  const canVote = hasAnyRole(user?.role, ['INSCRITO', 'CRIADOR', 'REVISOR', 'MASTER'])
   const [topico, setTopico] = useState<Topico | null>(null)
   const [comentarios, setComentarios] = useState<Comentario[]>([])
   const [texto, setTexto] = useState('')
@@ -108,6 +112,10 @@ export default function TopicoPage() {
   }
 
   const votar = async (id: string, tipo: 'UP' | 'DOWN') => {
+    if (!canVote) {
+      setError(user ? 'A sua conta nao tem permissao para votar.' : 'Inicie sessao para votar.')
+      return
+    }
     try {
       await api.votar({ entidadeId: id, tipoEntidade: 'COMENTARIO', tipoVoto: tipo })
       await carregar()
@@ -118,6 +126,10 @@ export default function TopicoPage() {
 
   const votarTopico = async (tipo: 'UP' | 'DOWN') => {
     if (!topico) return
+    if (!canVote) {
+      setError(user ? 'A sua conta nao tem permissao para votar.' : 'Inicie sessao para votar.')
+      return
+    }
     try {
       const result = await api.votar({ entidadeId: topico.id, tipoEntidade: 'TOPICO', tipoVoto: tipo })
       setTopico({ ...topico, score: result.score })
@@ -140,6 +152,18 @@ export default function TopicoPage() {
     }
   }
 
+  const apagarTopico = async () => {
+    if (!topico || !user || (user.role !== 'MASTER' && topico.autorId !== user.id)) return
+    if (!window.confirm(`Apagar o topico "${topico.titulo}"?`)) return
+    setError('')
+    try {
+      await api.apagarTopico(topico.id)
+      router.push(`/comunidade/forum/${topico.forumId}`)
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <Link href="/comunidade" className="text-sm text-on-surface-variant hover:text-primary transition-colors">Voltar ao Forum</Link>
@@ -150,11 +174,11 @@ export default function TopicoPage() {
         <CardContent className="p-0">
           <div className="flex">
             <div className="w-16 bg-surface-container-low flex flex-col items-center py-5 gap-2 border-r border-outline-variant">
-              <button disabled={!isRegistered} onClick={() => votarTopico('UP')} className="text-on-surface-variant hover:text-secondary disabled:opacity-40" title={!isRegistered ? 'Inicie sessao para votar' : 'Gosto'}>
+              <button disabled={!canVote} onClick={() => votarTopico('UP')} className="text-on-surface-variant hover:text-secondary disabled:opacity-40" title={!canVote ? 'Inicie sessao com uma conta ativa para votar' : 'Gosto'}>
                 <ArrowUp className="w-5 h-5" />
               </button>
               <span className="font-bold text-primary">{topico?.score ?? 0}</span>
-              <button disabled={!isRegistered} onClick={() => votarTopico('DOWN')} className="text-on-surface-variant hover:text-primary disabled:opacity-40" title={!isRegistered ? 'Inicie sessao para votar' : 'Nao gosto'}>
+              <button disabled={!canVote} onClick={() => votarTopico('DOWN')} className="text-on-surface-variant hover:text-primary disabled:opacity-40" title={!canVote ? 'Inicie sessao com uma conta ativa para votar' : 'Nao gosto'}>
                 <ArrowDown className="w-5 h-5" />
               </button>
             </div>
@@ -174,9 +198,15 @@ export default function TopicoPage() {
                   {topico.censurado ? 'Remover censura' : 'Censurar topico'}
                 </Button>
               )}
-              {!isRegistered && (
+              {topico && user && (user.role === 'MASTER' || topico.autorId === user.id) && (
+                <Button variant="outline" size="sm" className="border-error/40 text-error hover:bg-error/10" onClick={apagarTopico}>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Apagar topico
+                </Button>
+              )}
+              {!canVote && (
                 <p className="text-xs text-on-surface-variant rounded-md bg-surface-container p-3">
-                  Pode comentar como visitante. Para dar like ou dislike, entre na sua conta.
+                  Pode comentar como visitante. Para dar like ou dislike, entre numa conta ativa.
                 </p>
               )}
             </div>
@@ -223,7 +253,7 @@ export default function TopicoPage() {
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
             onVote={votar}
-            isRegistered={isRegistered}
+            isRegistered={canVote}
           />
         ))}
       </div>

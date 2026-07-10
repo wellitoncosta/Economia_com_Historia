@@ -2,6 +2,7 @@ package com.plataforma.subscricao.service;
 
 import com.plataforma.common.exception.BusinessRuleException;
 import com.plataforma.common.exception.ResourceNotFoundException;
+import com.plataforma.common.exception.UnauthorizedActionException;
 import com.plataforma.conteudo.repository.ConteudoRepository;
 import com.plataforma.forum.repository.ForumRepository;
 import com.plataforma.subscricao.dto.SubscricaoRequest;
@@ -13,6 +14,7 @@ import com.plataforma.usuario.repository.UtilizadorRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,6 +42,16 @@ public class SubscricaoServiceImpl implements SubscricaoService {
         }
         Utilizador utilizador = utilizadorRepository.findById(userId.toString())
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador nao encontrado"));
+
+        Subscricao existente = request.conteudoId() != null
+                ? repository.findFirstByUtilizadorIdAndConteudoId(userId.toString(), request.conteudoId()).orElse(null)
+                : repository.findFirstByUtilizadorIdAndForumId(userId.toString(), request.forumId()).orElse(null);
+        if (existente != null) {
+            existente.setAtivo(true);
+            existente.setDataFim(null);
+            return toResponse(repository.save(existente));
+        }
+
         Subscricao s = new Subscricao();
         s.setUtilizador(utilizador);
         if (request.conteudoId() != null) {
@@ -51,6 +63,19 @@ public class SubscricaoServiceImpl implements SubscricaoService {
                     .orElseThrow(() -> new ResourceNotFoundException("Forum nao encontrado")));
         }
         return toResponse(repository.save(s));
+    }
+
+    @Override
+    @Transactional
+    public void cancelar(String id, UUID userId) {
+        Subscricao subscricao = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Subscricao nao encontrada"));
+        if (!subscricao.getUtilizador().getId().equals(userId.toString())) {
+            throw new UnauthorizedActionException("Nao pode remover esta subscricao");
+        }
+        subscricao.setAtivo(false);
+        subscricao.setDataFim(LocalDateTime.now());
+        repository.save(subscricao);
     }
 
     @Override

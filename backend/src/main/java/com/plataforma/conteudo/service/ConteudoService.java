@@ -12,5 +12,5 @@ public interface ConteudoService {
     List<ConteudoResponse> explorar(TipoConteudo tipo, String categoria, String tag, UUID userId);
     ConteudoResponse obter(String id, UUID userId);
     ConteudoResponse aprovar(String id, boolean aprovado);
-    void apagar(String id);
+    void apagar(String id, UUID userId);
 }
