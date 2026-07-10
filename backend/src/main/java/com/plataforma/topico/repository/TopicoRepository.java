@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface TopicoRepository extends JpaRepository<Topico, String> {
     List<Topico> findByForumIdOrderByDataCriacaoDesc(String forumId);
+    void deleteByForumId(String forumId);
 }

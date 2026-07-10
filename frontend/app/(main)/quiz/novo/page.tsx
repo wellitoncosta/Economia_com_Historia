@@ -15,6 +15,7 @@ type DraftQuestion = { id: number; text: string; options: string[]; correct: num
 export default function NovoQuizPage() {
   const router = useRouter()
   const [foruns, setForuns] = useState<Forum[]>([])
+  const [titulo, setTitulo] = useState('')
   const [forumId, setForumId] = useState('')
   const [conteudoId, setConteudoId] = useState('')
   const [limiteUtilizadores, setLimiteUtilizadores] = useState('')
@@ -46,6 +47,7 @@ export default function NovoQuizPage() {
     setSubmitting(true)
     try {
       const sala = await api.criarSala({
+        titulo: titulo.trim(),
         forumId,
         conteudoId: conteudoId || null,
         limiteUtilizadores: limiteUtilizadores ? Number(limiteUtilizadores) : undefined,
@@ -86,6 +88,10 @@ export default function NovoQuizPage() {
       <Card>
         <CardContent className="p-6 md:p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-primary">Titulo do quiz</label>
+              <Input value={titulo} onChange={(event) => setTitulo(event.target.value)} placeholder="Ex: Economia angolana - nivel inicial" className="h-12" />
+            </div>
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-primary">Forum</label>
               <select value={forumId} onChange={(event) => setForumId(event.target.value)} className="w-full h-12 rounded-md border border-outline bg-surface-container-lowest px-3">
@@ -165,7 +171,7 @@ export default function NovoQuizPage() {
       </div>
 
       <div className="flex justify-end pt-8">
-        <Button size="lg" onClick={submit} disabled={submitting || !forumId}><Save className="w-4 h-4 mr-2" /> {submitting ? 'A publicar...' : 'Guardar e Publicar Quiz'}</Button>
+        <Button size="lg" onClick={submit} disabled={submitting || !forumId || !titulo.trim()}><Save className="w-4 h-4 mr-2" /> {submitting ? 'A publicar...' : 'Guardar e Publicar Quiz'}</Button>
       </div>
     </div>
   )

@@ -124,20 +124,6 @@ export default function TopicoPage() {
     }
   }
 
-  const votarTopico = async (tipo: 'UP' | 'DOWN') => {
-    if (!topico) return
-    if (!canVote) {
-      setError(user ? 'A sua conta nao tem permissao para votar.' : 'Inicie sessao para votar.')
-      return
-    }
-    try {
-      const result = await api.votar({ entidadeId: topico.id, tipoEntidade: 'TOPICO', tipoVoto: tipo })
-      setTopico({ ...topico, score: result.score })
-    } catch (err) {
-      setError(getErrorMessage(err))
-    }
-  }
-
   const censurarTopico = async () => {
     if (!topico || user?.role !== 'MASTER') return
     setModerating(true)
@@ -172,17 +158,7 @@ export default function TopicoPage() {
 
       <Card className="overflow-hidden border-primary/20 bg-surface-container-lowest">
         <CardContent className="p-0">
-          <div className="flex">
-            <div className="w-16 bg-surface-container-low flex flex-col items-center py-5 gap-2 border-r border-outline-variant">
-              <button disabled={!canVote} onClick={() => votarTopico('UP')} className="text-on-surface-variant hover:text-secondary disabled:opacity-40" title={!canVote ? 'Inicie sessao com uma conta ativa para votar' : 'Gosto'}>
-                <ArrowUp className="w-5 h-5" />
-              </button>
-              <span className="font-bold text-primary">{topico?.score ?? 0}</span>
-              <button disabled={!canVote} onClick={() => votarTopico('DOWN')} className="text-on-surface-variant hover:text-primary disabled:opacity-40" title={!canVote ? 'Inicie sessao com uma conta ativa para votar' : 'Nao gosto'}>
-                <ArrowDown className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5 md:p-6 space-y-4 flex-1">
+          <div className="p-5 md:p-6 space-y-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-secondary">
                 <Heart className="w-4 h-4" />
                 Topico em debate
@@ -204,12 +180,6 @@ export default function TopicoPage() {
                   Apagar topico
                 </Button>
               )}
-              {!canVote && (
-                <p className="text-xs text-on-surface-variant rounded-md bg-surface-container p-3">
-                  Pode comentar como visitante. Para dar like ou dislike, entre numa conta ativa.
-                </p>
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>

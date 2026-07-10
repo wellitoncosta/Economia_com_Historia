@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface PerguntaQuizRepository extends JpaRepository<PerguntaQuiz, String> {
     List<PerguntaQuiz> findBySalaIdOrderByOrdemAsc(String salaId);
+    List<PerguntaQuiz> findByConteudoId(String conteudoId);
+    void deleteBySalaId(String salaId);
 }

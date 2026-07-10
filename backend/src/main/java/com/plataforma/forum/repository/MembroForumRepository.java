@@ -10,4 +10,5 @@ public interface MembroForumRepository extends JpaRepository<MembroForum, String
     Optional<MembroForum> findByForumIdAndUtilizadorId(String forumId, String utilizadorId);
     boolean existsByForumIdAndUtilizadorId(String forumId, String utilizadorId);
     boolean existsByForumIdAndUtilizadorIdAndPapelIn(String forumId, String utilizadorId, Iterable<PapelForum> papeis);
+    void deleteByForumId(String forumId);
 }

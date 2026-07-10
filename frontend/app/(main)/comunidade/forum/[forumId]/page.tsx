@@ -3,12 +3,11 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { AlertTriangle, ArrowDown, ArrowLeft, ArrowUp, Flame, Lock, MessageCircle, Plus, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Flame, Lock, MessageCircle, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { api, getErrorMessage } from '@/lib/api'
-import { hasAnyRole } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Chip } from '@/components/ui/chip'
@@ -18,10 +17,8 @@ import type { Forum, Topico } from '@/lib/types'
 
 export default function ForumTopicosPage() {
   const { forumId } = useParams<{ forumId: string }>()
-  const router = useRouter()
   const { user } = useAuth()
   const isRegistered = user !== null
-  const canVote = hasAnyRole(user?.role, ['INSCRITO', 'CRIADOR', 'REVISOR', 'MASTER'])
   const isModerador = user?.role === 'MASTER' || user?.role === 'REVISOR'
   const canMarkJindungo = user?.role === 'CRIADOR' || user?.role === 'REVISOR' || user?.role === 'MASTER'
 
@@ -71,23 +68,6 @@ export default function ForumTopicosPage() {
       setError(getErrorMessage(err))
     } finally {
       setCreating(false)
-    }
-  }
-
-  const votar = async (topico: Topico, tipoVoto: 'UP' | 'DOWN') => {
-    if (!canVote) {
-      if (user) {
-        setError('A sua conta nao tem permissao para votar.')
-        return
-      }
-      router.push('/')
-      return
-    }
-    try {
-      const result = await api.votar({ entidadeId: topico.id, tipoEntidade: 'TOPICO', tipoVoto })
-      setTopicos((current) => current.map((item) => item.id === topico.id ? { ...item, score: result.score } : item))
-    } catch (err) {
-      setError(getErrorMessage(err))
     }
   }
 
@@ -198,18 +178,7 @@ export default function ForumTopicosPage() {
 
           return (
             <Card key={topico.id} className={`hover:border-primary/30 transition-colors ${isJindungo ? 'border-error/30' : ''}`}>
-              <CardContent className="p-0 flex">
-                <div className="bg-surface-container-low w-14 flex flex-col items-center py-4 gap-1.5 rounded-l-xl border-r border-outline-variant">
-                  <button disabled={!canVote} onClick={() => votar(topico, 'UP')} className="text-on-surface-variant hover:text-secondary disabled:opacity-40 transition-colors">
-                    <ArrowUp className="w-5 h-5" />
-                  </button>
-                  <span className="font-bold text-primary text-sm">{topico.score}</span>
-                  <button disabled={!canVote} onClick={() => votar(topico, 'DOWN')} className="text-on-surface-variant hover:text-error disabled:opacity-40 transition-colors">
-                    <ArrowDown className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="p-4 md:p-5 flex-1 space-y-2 min-w-0">
+              <CardContent className="p-4 md:p-5 space-y-2">
                   <div className="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
                     {isJindungo && (
                       <Chip variant="default" className="bg-error/10 text-error border-error/20 gap-1">
@@ -243,7 +212,6 @@ export default function ForumTopicosPage() {
                       </button>
                     )}
                   </div>
-                </div>
               </CardContent>
             </Card>
           )
@@ -253,7 +221,7 @@ export default function ForumTopicosPage() {
       {!isRegistered && (
         <div className="rounded-xl border border-outline-variant bg-surface-container p-4 text-center text-sm text-on-surface-variant">
           <Link href="/" className="text-primary font-semibold hover:underline">Inicie sessao</Link>{' '}
-          para votar e criar topicos. Visitantes podem comentar dentro do topico.
+          para criar topicos. Visitantes podem comentar dentro do topico.
         </div>
       )}
     </div>

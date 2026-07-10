@@ -10,4 +10,5 @@ public interface ParticipanteSalaRepository extends JpaRepository<ParticipanteSa
     long countBySalaIdAndAtivoTrue(String salaId);
     Optional<ParticipanteSala> findBySalaIdAndUtilizadorId(String salaId, String utilizadorId);
     List<ParticipanteSala> findBySalaIdOrderByPontuacaoAcumuladaDesc(String salaId);
+    void deleteBySalaId(String salaId);
 }

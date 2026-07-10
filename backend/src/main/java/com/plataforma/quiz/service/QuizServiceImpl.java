@@ -94,6 +94,7 @@ public class QuizServiceImpl implements QuizService {
         Forum forum = forumRepository.findById(request.forumId())
                 .orElseThrow(() -> new ResourceNotFoundException("Forum nao encontrado"));
         SalaQuiz sala = new SalaQuiz();
+        sala.setTitulo(request.titulo().trim());
         sala.setForum(forum);
         sala.setCriador(utilizadorRepository.findById(userId.toString())
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador nao encontrado")));
@@ -177,11 +178,11 @@ public class QuizServiceImpl implements QuizService {
             sala.setEstado(EstadoSalaQuiz.EM_ANDAMENTO);
             salaRepository.save(sala);
         }
-        if (!visitante && respostaRepository.existsByPerguntaIdAndUtilizadorId(payload.perguntaId(), utilizadorResposta.getId())) {
-            throw new BusinessRuleException("Pergunta ja respondida");
-        }
         PerguntaQuiz pergunta = perguntaRepository.findById(payload.perguntaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Pergunta nao encontrada"));
+        if (!pergunta.getSala().getId().equals(salaId)) {
+            throw new BusinessRuleException("Pergunta nao pertence a esta sala");
+        }
         boolean correta = pergunta.getRespostaCorreta().equalsIgnoreCase(payload.resposta());
         int pontos = correta ? engineService.calcularPontuacaoKahoot(payload.tempoGastoMs(), sala.getTempoLimiteMs(), sala.getPontosBase()) : 0;
         if (visitante) {
@@ -196,13 +197,15 @@ public class QuizServiceImpl implements QuizService {
                     novo.setPontuacaoAcumulada(0);
                     return participanteRepository.save(novo);
                 });
-        participante.setPontuacaoAcumulada((participante.getPontuacaoAcumulada() == null ? 0 : participante.getPontuacaoAcumulada()) + pontos);
+        RespostaQuiz respostaExistente = respostaRepository.findByPerguntaIdAndUtilizadorId(payload.perguntaId(), utilizadorResposta.getId()).orElse(null);
+        int pontosAnteriores = respostaExistente == null ? 0 : respostaExistente.getPontuacaoCalculada();
+        participante.setPontuacaoAcumulada((participante.getPontuacaoAcumulada() == null ? 0 : participante.getPontuacaoAcumulada()) - pontosAnteriores + pontos);
         participanteRepository.save(participante);
         Utilizador utilizador = participante.getUtilizador();
-        utilizador.setPontosAcumulados((utilizador.getPontosAcumulados() == null ? 0 : utilizador.getPontosAcumulados()) + pontos);
+        utilizador.setPontosAcumulados((utilizador.getPontosAcumulados() == null ? 0 : utilizador.getPontosAcumulados()) - pontosAnteriores + pontos);
         utilizadorRepository.save(utilizador);
 
-        RespostaQuiz resposta = new RespostaQuiz();
+        RespostaQuiz resposta = respostaExistente == null ? new RespostaQuiz() : respostaExistente;
         resposta.setSala(sala);
         resposta.setPergunta(pergunta);
         resposta.setUtilizador(participante.getUtilizador());
@@ -236,6 +239,9 @@ public class QuizServiceImpl implements QuizService {
         if (!isMaster() && (sala.getCriador() == null || !sala.getCriador().getId().equals(currentUserId))) {
             throw new UnauthorizedActionException("Apenas o criador ou Master pode apagar o quiz");
         }
+        respostaRepository.deleteBySalaId(id);
+        participanteRepository.deleteBySalaId(id);
+        perguntaRepository.deleteBySalaId(id);
         salaRepository.delete(sala);
     }
 
@@ -271,7 +277,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     private SalaQuizResponse toSalaResponse(SalaQuiz sala) {
-        return new SalaQuizResponse(sala.getId(), sala.getForum().getId(),
+        return new SalaQuizResponse(sala.getId(), sala.getTitulo(), sala.getForum().getId(),
                 sala.getConteudo() == null ? null : sala.getConteudo().getId(),
                 sala.getLimiteUtilizadores(), sala.getTempoLimiteMs(), sala.getPontosBase(), sala.getEstado(),
                 sala.getCriador() == null ? null : sala.getCriador().getId(),

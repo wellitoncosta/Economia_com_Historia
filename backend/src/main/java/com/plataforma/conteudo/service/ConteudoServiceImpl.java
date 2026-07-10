@@ -10,6 +10,8 @@ import com.plataforma.conteudo.dto.ConteudoResponse;
 import com.plataforma.conteudo.entity.Conteudo;
 import com.plataforma.conteudo.entity.TipoConteudo;
 import com.plataforma.conteudo.repository.ConteudoRepository;
+import com.plataforma.quiz.repository.PerguntaQuizRepository;
+import com.plataforma.quiz.repository.SalaQuizRepository;
 import com.plataforma.subscricao.repository.SubscricaoRepository;
 import com.plataforma.usuario.entity.Role;
 import com.plataforma.usuario.entity.Utilizador;
@@ -27,13 +29,18 @@ public class ConteudoServiceImpl implements ConteudoService {
     private final ConteudoRepository conteudoRepository;
     private final UtilizadorRepository utilizadorRepository;
     private final SubscricaoRepository subscricaoRepository;
+    private final SalaQuizRepository salaQuizRepository;
+    private final PerguntaQuizRepository perguntaQuizRepository;
     private final ObjectMapper objectMapper;
 
     public ConteudoServiceImpl(ConteudoRepository conteudoRepository, UtilizadorRepository utilizadorRepository,
-                               SubscricaoRepository subscricaoRepository, ObjectMapper objectMapper) {
+                               SubscricaoRepository subscricaoRepository, SalaQuizRepository salaQuizRepository,
+                               PerguntaQuizRepository perguntaQuizRepository, ObjectMapper objectMapper) {
         this.conteudoRepository = conteudoRepository;
         this.utilizadorRepository = utilizadorRepository;
         this.subscricaoRepository = subscricaoRepository;
+        this.salaQuizRepository = salaQuizRepository;
+        this.perguntaQuizRepository = perguntaQuizRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -101,6 +108,9 @@ public class ConteudoServiceImpl implements ConteudoService {
         if (userId == null || (!isMaster() && !conteudo.getAutor().getId().equals(userId.toString()))) {
             throw new UnauthorizedActionException("Apenas o autor ou Master pode apagar o conteudo");
         }
+        perguntaQuizRepository.findByConteudoId(id).forEach(pergunta -> pergunta.setConteudo(null));
+        salaQuizRepository.findByConteudoId(id).forEach(sala -> sala.setConteudo(null));
+        subscricaoRepository.deleteByConteudoId(id);
         conteudoRepository.delete(conteudo);
     }
 

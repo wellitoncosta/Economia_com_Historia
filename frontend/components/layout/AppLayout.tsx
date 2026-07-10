@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, Users, Trophy, Settings, LayoutDashboard, LogOut, UserCircle, Bookmark, ShieldCheck } from 'lucide-react'
+import { Home, BookOpen, Users, Trophy, Settings, LayoutDashboard, LogOut, UserCircle, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -20,7 +20,6 @@ export function AppLayout({ children, isAdmin = false }: { children: React.React
     { icon: Users, label: t.navForums, href: '/comunidade' },
     { icon: Trophy, label: t.navQuizzes, href: '/quiz' },
     { icon: UserCircle, label: t.navProfile, href: '/perfil' },
-    { icon: Bookmark, label: t.navSaved, href: '/guardados' },
     ...(role === 'MASTER' ? [{ icon: ShieldCheck, label: t.navAdmin, href: '/admin/sistema' }] : []),
     { icon: Settings, label: t.navSettings, href: '/configuracoes' },
   ]

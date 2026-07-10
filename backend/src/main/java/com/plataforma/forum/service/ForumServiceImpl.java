@@ -12,6 +12,13 @@ import com.plataforma.forum.entity.MembroForum;
 import com.plataforma.forum.entity.PapelForum;
 import com.plataforma.forum.repository.ForumRepository;
 import com.plataforma.forum.repository.MembroForumRepository;
+import com.plataforma.quiz.repository.ParticipanteSalaRepository;
+import com.plataforma.quiz.repository.PerguntaQuizRepository;
+import com.plataforma.quiz.repository.RespostaQuizRepository;
+import com.plataforma.quiz.repository.SalaQuizRepository;
+import com.plataforma.subscricao.repository.SubscricaoRepository;
+import com.plataforma.comentario.repository.ComentarioRepository;
+import com.plataforma.topico.repository.TopicoRepository;
 import com.plataforma.usuario.entity.Role;
 import com.plataforma.usuario.entity.Utilizador;
 import com.plataforma.usuario.repository.UtilizadorRepository;
@@ -28,13 +35,34 @@ public class ForumServiceImpl implements ForumService {
     private final ForumRepository forumRepository;
     private final MembroForumRepository membroRepository;
     private final UtilizadorRepository utilizadorRepository;
+    private final SalaQuizRepository salaQuizRepository;
+    private final PerguntaQuizRepository perguntaQuizRepository;
+    private final ParticipanteSalaRepository participanteSalaRepository;
+    private final RespostaQuizRepository respostaQuizRepository;
+    private final TopicoRepository topicoRepository;
+    private final ComentarioRepository comentarioRepository;
+    private final SubscricaoRepository subscricaoRepository;
 
     public ForumServiceImpl(ForumRepository forumRepository,
                             MembroForumRepository membroRepository,
-                            UtilizadorRepository utilizadorRepository) {
+                            UtilizadorRepository utilizadorRepository,
+                            SalaQuizRepository salaQuizRepository,
+                            PerguntaQuizRepository perguntaQuizRepository,
+                            ParticipanteSalaRepository participanteSalaRepository,
+                            RespostaQuizRepository respostaQuizRepository,
+                            TopicoRepository topicoRepository,
+                            ComentarioRepository comentarioRepository,
+                            SubscricaoRepository subscricaoRepository) {
         this.forumRepository = forumRepository;
         this.membroRepository = membroRepository;
         this.utilizadorRepository = utilizadorRepository;
+        this.salaQuizRepository = salaQuizRepository;
+        this.perguntaQuizRepository = perguntaQuizRepository;
+        this.participanteSalaRepository = participanteSalaRepository;
+        this.respostaQuizRepository = respostaQuizRepository;
+        this.topicoRepository = topicoRepository;
+        this.comentarioRepository = comentarioRepository;
+        this.subscricaoRepository = subscricaoRepository;
     }
 
     @Override
@@ -95,6 +123,16 @@ public class ForumServiceImpl implements ForumService {
         if (userId == null || (!isMaster() && !forum.getDono().getId().equals(userId.toString()))) {
             throw new UnauthorizedActionException("Apenas o dono ou Master pode apagar o forum");
         }
+        salaQuizRepository.findByForumId(id).forEach(sala -> {
+            respostaQuizRepository.deleteBySalaId(sala.getId());
+            participanteSalaRepository.deleteBySalaId(sala.getId());
+            perguntaQuizRepository.deleteBySalaId(sala.getId());
+            salaQuizRepository.delete(sala);
+        });
+        topicoRepository.findByForumIdOrderByDataCriacaoDesc(id).forEach(topico -> comentarioRepository.deleteByTopicoId(topico.getId()));
+        topicoRepository.deleteByForumId(id);
+        membroRepository.deleteByForumId(id);
+        subscricaoRepository.deleteByForumId(id);
         forumRepository.delete(forum);
     }
 

@@ -129,7 +129,7 @@ export const api = {
   minhasSubscricoes: () => apiFetch<Subscricao[]>('/api/subscricoes/minhas'),
   subscrever: (body: { conteudoId?: string | null; forumId?: string | null }) => apiFetch<Subscricao>('/api/subscricoes', { method: 'POST', body }),
   cancelarSubscricao: (id: string) => apiFetch<void>(`/api/subscricoes/${id}`, { method: 'DELETE' }),
-  criarSala: (body: { forumId: string; conteudoId?: string | null; limiteUtilizadores?: number; tempoLimiteMs: number; pontosBase: number }) =>
+  criarSala: (body: { titulo: string; forumId: string; conteudoId?: string | null; limiteUtilizadores?: number; tempoLimiteMs: number; pontosBase: number }) =>
     apiFetch<SalaQuiz>('/api/quiz/salas', { method: 'POST', body }),
   salas: (query?: { forumId?: string; estado?: string }) => apiFetch<SalaQuiz[]>('/api/quiz/salas', { query }),
   adicionarPergunta: (salaId: string, body: { enunciado: string; alternativas: string[]; respostaCorreta: string; ordem: number }) =>

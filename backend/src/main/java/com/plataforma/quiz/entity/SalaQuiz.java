@@ -22,6 +22,8 @@ import java.util.UUID;
 public class SalaQuiz {
     @Id
     private String id;
+    @Column(nullable = false, length = 160)
+    private String titulo;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "forum_id")
     private Forum forum;
@@ -48,6 +50,7 @@ public class SalaQuiz {
     @PrePersist
     void prePersist() {
         if (id == null) id = UUID.randomUUID().toString();
+        if (titulo == null || titulo.isBlank()) titulo = "Quiz";
         if (limiteUtilizadores == null || limiteUtilizadores < 1) limiteUtilizadores = 1;
         if (estado == null) estado = EstadoSalaQuiz.AGUARDANDO;
         if (oculto == null) oculto = false;
@@ -56,6 +59,8 @@ public class SalaQuiz {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
     public Forum getForum() { return forum; }
     public void setForum(Forum forum) { this.forum = forum; }
     public Conteudo getConteudo() { return conteudo; }

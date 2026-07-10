@@ -1,0 +1,2 @@
+ALTER TABLE salas_quiz
+    ADD COLUMN titulo VARCHAR(160) NOT NULL DEFAULT 'Quiz';

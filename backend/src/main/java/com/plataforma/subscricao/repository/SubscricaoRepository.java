@@ -12,4 +12,6 @@ public interface SubscricaoRepository extends JpaRepository<Subscricao, String> 
     Optional<Subscricao> findFirstByUtilizadorIdAndConteudoId(String utilizadorId, String conteudoId);
     Optional<Subscricao> findFirstByUtilizadorIdAndForumId(String utilizadorId, String forumId);
     List<Subscricao> findByUtilizadorIdAndAtivoTrue(String utilizadorId);
+    void deleteByConteudoId(String conteudoId);
+    void deleteByForumId(String forumId);
 }

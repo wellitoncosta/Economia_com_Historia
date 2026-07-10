@@ -92,13 +92,13 @@ export interface Subscricao {
 
 export interface SalaQuiz {
   id: string
+  titulo: string
   forumId: string
   conteudoId?: string | null
   limiteUtilizadores?: number | null
   tempoLimiteMs: number
   pontosBase: number
   estado: EstadoSalaQuiz
-  titulo?: string | null
   criadorId?: string | null
   criadorEmail?: string | null
   oculto?: boolean
