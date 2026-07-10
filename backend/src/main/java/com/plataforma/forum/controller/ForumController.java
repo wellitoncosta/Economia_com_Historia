@@ -49,6 +49,13 @@ public class ForumController {
         return service.obter(id, userId);
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MASTER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void apagar(@PathVariable String id, @AuthenticationPrincipal UUID userId) {
+        service.apagar(id, userId);
+    }
+
     @PostMapping(value = "/{id}/membros", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void adicionarMembro(@PathVariable String id, @Valid @RequestBody AdicionarMembroRequest request,

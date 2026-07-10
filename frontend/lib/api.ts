@@ -120,7 +120,7 @@ export const api = {
   comentar: (topicoId: string, body: { texto: string; comentarioPaiId?: string | null }) =>
     apiFetch<Comentario>(`/api/topicos/${topicoId}/comentarios`, { method: 'POST', body }),
   votar: (body: { entidadeId: string; tipoEntidade: TipoEntidadeVoto; tipoVoto: TipoVoto }) =>
-    apiFetch<{ entidadeId: string; tipoEntidade: TipoEntidadeVoto; votoAtual: TipoVoto; score: number }>('/api/votos', { method: 'POST', body }),
+    apiFetch<{ entidadeId: string; tipoEntidade: TipoEntidadeVoto; votoAtual: TipoVoto | null; score: number }>('/api/votos', { method: 'POST', body }),
   addMembro: (forumId: string, body: { utilizadorId: string; papel: PapelForum }) =>
     apiFetch<void>(`/api/foruns/${forumId}/membros`, { method: 'POST', body }),
   removeMembro: (forumId: string, membroId: string) => apiFetch<void>(`/api/foruns/${forumId}/membros/${membroId}`, { method: 'DELETE' }),
@@ -145,6 +145,13 @@ export const api = {
   recomendacoes: () => apiFetch<Recomendacao[]>('/api/recomendacoes'),
   usuario: (id: string) => apiFetch<Utilizador>(`/api/usuarios/${id}`),
   alterarRole: (id: string, role: Role) => apiFetch<Utilizador>(`/api/usuarios/${id}/role`, { method: 'PATCH', body: { role } }),
+  listarUtilizadores: () => apiFetch<Utilizador[]>('/api/usuarios'),
+  apagarForum: (id: string) => apiFetch<void>(`/api/foruns/${id}`, { method: 'DELETE' }),
+  apagarTopico: (id: string) => apiFetch<void>(`/api/topicos/${id}`, { method: 'DELETE' }),
+  apagarConteudo: (id: string) => apiFetch<void>(`/api/conteudos/${id}`, { method: 'DELETE' }),
+  apagarSalaQuiz: (id: string) => apiFetch<void>(`/api/quiz/salas/${id}`, { method: 'DELETE' }),
+  ocultarConteudo: (id: string, aprovado: boolean) =>
+    apiFetch<Conteudo>(`/api/conteudos/${id}/aprovar`, { method: 'PATCH', query: { aprovado } }),
 }
 
 export function getErrorMessage(error: unknown) {

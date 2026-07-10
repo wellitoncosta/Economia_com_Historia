@@ -94,6 +94,13 @@ public class ConteudoServiceImpl implements ConteudoService {
         return toResponse(conteudoRepository.save(conteudo));
     }
 
+    @Override
+    @Transactional
+    public void apagar(String id) {
+        Conteudo conteudo = getConteudo(id);
+        conteudoRepository.delete(conteudo);
+    }
+
     private boolean podeLer(Conteudo conteudo, UUID userId) {
         if (!Boolean.TRUE.equals(conteudo.getExclusivo()) || isMaster()) return true;
         return userId != null && subscricaoRepository.existsByUtilizadorIdAndConteudoIdAndAtivoTrue(userId.toString(), conteudo.getId());

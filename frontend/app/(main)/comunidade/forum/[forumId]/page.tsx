@@ -3,7 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AlertTriangle, ArrowDown, ArrowLeft, ArrowUp, Flame, Lock, MessageCircle, Plus } from 'lucide-react'
 import { useAuth } from '@/app/contexts/AuthContext'
@@ -17,6 +17,7 @@ import type { Forum, Topico } from '@/lib/types'
 
 export default function ForumTopicosPage() {
   const { forumId } = useParams<{ forumId: string }>()
+  const router = useRouter()
   const { user } = useAuth()
   const isRegistered = user !== null
   const isModerador = user?.role === 'MASTER' || user?.role === 'REVISOR'
@@ -72,7 +73,10 @@ export default function ForumTopicosPage() {
   }
 
   const votar = async (topico: Topico, tipoVoto: 'UP' | 'DOWN') => {
-    if (!isRegistered) return
+    if (!isRegistered) {
+      router.push('/')
+      return
+    }
     try {
       const result = await api.votar({ entidadeId: topico.id, tipoEntidade: 'TOPICO', tipoVoto })
       setTopicos((current) => current.map((item) => item.id === topico.id ? { ...item, score: result.score } : item))

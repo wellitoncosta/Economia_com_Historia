@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(value = "/api/usuarios", produces = MediaType.APPLICATION_JSON_VALUE)
 public class UtilizadorController {
@@ -20,6 +22,12 @@ public class UtilizadorController {
 
     public UtilizadorController(UtilizadorService service) {
         this.service = service;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('MASTER')")
+    public List<UtilizadorResponse> listar() {
+        return service.listar();
     }
 
     @GetMapping("/{id}")

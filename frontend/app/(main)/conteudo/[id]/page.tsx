@@ -22,6 +22,8 @@ export default function ConteudoDetalhePage() {
   const [conteudo, setConteudo] = useState<Conteudo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [subscrito, setSubscrito] = useState(false)
+  const [loadingLike, setLoadingLike] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -39,6 +41,22 @@ export default function ConteudoDetalhePage() {
   const titulo = language === 'en' ? conteudo.tituloEn || conteudo.titulo : conteudo.titulo
   const descricao = language === 'en' ? conteudo.descricaoEn || conteudo.descricao : conteudo.descricao
   const corpoTexto = language === 'en' ? conteudo.corpoTextoEn || conteudo.corpoTexto : conteudo.corpoTexto
+
+  const toggleLike = async () => {
+    if (!user) {
+      router.push('/')
+      return
+    }
+    setLoadingLike(true)
+    try {
+      await api.subscrever({ conteudoId: conteudo.id })
+      setSubscrito(true)
+    } catch {
+      setSubscrito(true)
+    } finally {
+      setLoadingLike(false)
+    }
+  }
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in duration-500 pb-12">
@@ -72,7 +90,15 @@ export default function ConteudoDetalhePage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="icon" disabled={!user} title={!user ? 'Inicie sessao para guardar' : 'Guardar'}><Bookmark className="w-4 h-4" /></Button>
+          <Button
+            variant={subscrito ? 'secondary' : 'outline'}
+            size="icon"
+            disabled={loadingLike}
+            title={!user ? 'Inicie sessao para guardar' : subscrito ? 'Guardado' : 'Guardar'}
+            onClick={toggleLike}
+          >
+            <Bookmark className="w-4 h-4" />
+          </Button>
           <Button variant="outline" size="icon"><Share2 className="w-4 h-4" /></Button>
         </div>
       </div>

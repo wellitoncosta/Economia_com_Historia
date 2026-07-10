@@ -86,6 +86,7 @@ export interface Subscricao {
   forumId?: string | null
   ativo: boolean
   dataInicio: string
+  dataFim?: string | null
 }
 
 export interface SalaQuiz {

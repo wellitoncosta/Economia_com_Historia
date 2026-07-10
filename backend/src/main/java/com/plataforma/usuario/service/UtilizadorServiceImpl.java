@@ -9,12 +9,22 @@ import com.plataforma.usuario.repository.UtilizadorRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class UtilizadorServiceImpl implements UtilizadorService {
     private final UtilizadorRepository repository;
 
     public UtilizadorServiceImpl(UtilizadorRepository repository) {
         this.repository = repository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UtilizadorResponse> listar() {
+        return repository.findAll().stream()
+                .map(UtilizadorMapper::toResponse)
+                .toList();
     }
 
     @Override

@@ -88,6 +88,13 @@ public class TopicoServiceImpl implements TopicoService {
 
     @Override
     @Transactional
+    public void apagar(String id, UUID userId) {
+        Topico topico = getTopico(id);
+        topicoRepository.delete(topico);
+    }
+
+    @Override
+    @Transactional
     public void atualizarScore(String topicoId, int score) {
         Topico topico = getTopico(topicoId);
         topico.setScore(score);

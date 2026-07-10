@@ -11,5 +11,6 @@ public interface TopicoService {
     TopicoResponse obter(String id, UUID userId);
     List<TopicoResponse> listarPorForum(String forumId, UUID userId);
     TopicoResponse censurar(String topicoId, boolean censurado, UUID userId);
+    void apagar(String id, UUID userId);
     void atualizarScore(String topicoId, int score);
 }

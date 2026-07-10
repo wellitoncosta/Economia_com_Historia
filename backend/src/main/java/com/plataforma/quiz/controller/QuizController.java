@@ -11,7 +11,9 @@ import com.plataforma.quiz.service.QuizService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,5 +81,12 @@ public class QuizController {
     public ResultadoRespostaPayload responder(@PathVariable String id, @Valid @RequestBody RespostaQuizPayload request,
                                               @AuthenticationPrincipal UUID userId) {
         return service.responder(id, request, userId);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MASTER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void apagarSala(@PathVariable String id) {
+        service.apagarSala(id);
     }
 }

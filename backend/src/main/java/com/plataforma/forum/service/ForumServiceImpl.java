@@ -82,6 +82,13 @@ public class ForumServiceImpl implements ForumService {
 
     @Override
     @Transactional
+    public void apagar(String id, UUID userId) {
+        Forum forum = getForum(id);
+        forumRepository.delete(forum);
+    }
+
+    @Override
+    @Transactional
     public void adicionarMembro(String forumId, AdicionarMembroRequest request, UUID userId) {
         assertModerador(forumId, userId.toString());
         if (membroRepository.existsByForumIdAndUtilizadorId(forumId, request.utilizadorId())) {

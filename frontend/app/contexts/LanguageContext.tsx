@@ -11,6 +11,8 @@ type Dictionary = {
   navForums: string
   navQuizzes: string
   navProfile: string
+  navSaved: string
+  navAdmin: string
   navSettings: string
   login: string
   createAccount: string
@@ -53,6 +55,8 @@ const dictionaries: Record<Language, Dictionary> = {
     navForums: 'Foruns',
     navQuizzes: 'Quizzes',
     navProfile: 'Perfil',
+    navSaved: 'Guardados',
+    navAdmin: 'Gerir Sistema',
     navSettings: 'Configuracoes',
     login: 'Entrar',
     createAccount: 'Criar conta',
@@ -93,6 +97,8 @@ const dictionaries: Record<Language, Dictionary> = {
     navForums: 'Forums',
     navQuizzes: 'Quizzes',
     navProfile: 'Profile',
+    navSaved: 'Saved',
+    navAdmin: 'Manage System',
     navSettings: 'Settings',
     login: 'Sign in',
     createAccount: 'Create account',

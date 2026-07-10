@@ -220,6 +220,13 @@ public class QuizServiceImpl implements QuizService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public void apagarSala(String id) {
+        SalaQuiz sala = getSala(id);
+        salaRepository.delete(sala);
+    }
+
     private SalaQuiz assertModeradorSala(String salaId, UUID userId) {
         SalaQuiz sala = getSala(salaId);
         if (userId == null) {

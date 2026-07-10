@@ -21,4 +21,5 @@ public interface QuizService {
     ResultadoRespostaPayload responder(String salaId, RespostaQuizPayload payload, UUID userId);
     List<PerguntaQuizPayload> perguntasPublicas(String salaId);
     List<RankingSalaResponse> ranking(String salaId);
+    void apagarSala(String id);
 }
