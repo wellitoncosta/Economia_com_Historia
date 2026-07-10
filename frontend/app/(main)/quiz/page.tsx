@@ -63,7 +63,7 @@ export default function QuizHubPage() {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">
           <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary">Salas de Quiz</h1>
           <p className="text-on-surface-variant">Entre numa sala activa ou crie uma nova para testar conhecimentos.</p>
@@ -128,8 +128,13 @@ export default function QuizHubPage() {
             <Card key={sala.id} className="hover:border-primary/30 transition-colors">
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-1">
-                    <p className="text-xs font-mono text-on-surface-variant">ID: {sala.id.slice(0, 12)}...</p>
+                  <div className="space-y-1 min-w-0">
+                    <p className="font-semibold text-on-surface truncate">
+                      {sala.titulo || `Quiz - ${sala.id.slice(0, 8)}`}
+                    </p>
+                    {sala.criadorEmail && (
+                      <p className="text-xs text-on-surface-variant truncate">Criado por {sala.criadorEmail}</p>
+                    )}
                     <Chip variant={estado.color} className="text-xs">{estado.label}</Chip>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">

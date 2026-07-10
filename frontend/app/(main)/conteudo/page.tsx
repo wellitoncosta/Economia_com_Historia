@@ -7,8 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Chip } from '@/components/ui/chip'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Filter, BookOpen, Video, Mic, Calendar, Lock } from 'lucide-react'
+import { Search, Filter, BookOpen, Video, Mic, Calendar, Lock, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { useAuth } from '@/app/contexts/AuthContext'
 import { useLanguage } from '@/app/contexts/LanguageContext'
 import { api, contentTypeLabel, getErrorMessage } from '@/lib/api'
 import type { Conteudo, TipoConteudo } from '@/lib/types'
@@ -17,6 +18,7 @@ const filters: Array<'Todos' | TipoConteudo> = ['Todos', 'TEXTO', 'VIDEO', 'AUDI
 
 export default function ExplorarPage() {
   const { language } = useLanguage()
+  const { role } = useAuth()
   const [filter, setFilter] = useState<'Todos' | TipoConteudo>('Todos')
   const [search, setSearch] = useState('')
   const [conteudos, setConteudos] = useState<Conteudo[]>([])
@@ -45,7 +47,16 @@ export default function ExplorarPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="space-y-4">
-        <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary">Explorar Acervo</h1>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary">Explorar Acervo</h1>
+          {(role === 'MASTER' || role === 'CRIADOR' || role === 'REVISOR') && (
+            <Button variant="secondary" asChild>
+              <Link href="/admin/conteudos/novo">
+                <Plus className="w-4 h-4 mr-2" /> Publicar Artigo
+              </Link>
+            </Button>
+          )}
+        </div>
 
         <div className="flex flex-col md:flex-row gap-4 pt-4">
           <div className="relative flex-1">

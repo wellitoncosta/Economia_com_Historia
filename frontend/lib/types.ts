@@ -96,6 +96,8 @@ export interface SalaQuiz {
   tempoLimiteMs: number
   pontosBase: number
   estado: EstadoSalaQuiz
+  titulo?: string | null
+  criadorEmail?: string | null
 }
 
 export interface PerguntaQuiz {

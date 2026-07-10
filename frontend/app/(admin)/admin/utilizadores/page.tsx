@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ShieldOff } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -76,6 +77,12 @@ export default function UtilizadoresAdminPage() {
                 </select>
                 <Button onClick={changeRole}>Alterar role</Button>
               </div>
+              {role === 'VISITANTE' && (
+                <p className="text-xs text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                  <ShieldOff className="w-3.5 h-3.5 shrink-0" />
+                  Atencao: definir como VISITANTE bloqueia o utilizador. Nao podera comentar, votar nem criar conteudo.
+                </p>
+              )}
             </>
           )}
         </CardContent>

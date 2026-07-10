@@ -27,6 +27,7 @@ export default function QuizExecutionPage() {
   const [ranking, setRanking] = useState<RankingQuiz[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [timeLeft, setTimeLeft] = useState(0)
 
   useEffect(() => {
     startedAt.current = Date.now()
@@ -63,6 +64,16 @@ export default function QuizExecutionPage() {
 
   const question = questions[current]
   const progress = useMemo(() => questions.length ? `${current + 1} de ${questions.length}` : '0 de 0', [current, questions.length])
+  const timerPercent = question?.tempoLimiteMs ? Math.max(0, Math.min(100, (timeLeft / question.tempoLimiteMs) * 100)) : 100
+
+  useEffect(() => {
+    if (!question || showFeedback || waiting) return
+    setTimeLeft(question.tempoLimiteMs)
+    const interval = window.setInterval(() => {
+      setTimeLeft((value) => Math.max(0, value - 100))
+    }, 100)
+    return () => window.clearInterval(interval)
+  }, [current, question, showFeedback, waiting])
 
   const handleConfirm = async () => {
     if (!question || selected === null) return
@@ -108,11 +119,11 @@ export default function QuizExecutionPage() {
 
       <div className="flex items-center justify-between text-sm font-semibold uppercase tracking-wider text-on-surface-variant">
         <span>Pergunta {progress}</span>
-        <span className="flex items-center gap-1 font-mono bg-surface-container px-3 py-1 rounded-full text-primary">{question.tempoLimiteMs} ms</span>
+        <span className="flex items-center gap-1 font-mono bg-surface-container px-3 py-1 rounded-full text-primary">{Math.ceil(timeLeft / 1000)}s</span>
       </div>
 
       <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-        <div className="bg-primary h-full" style={{ width: `${((current + 1) / questions.length) * 100}%` }}></div>
+        <div className="bg-primary h-full transition-all duration-100 ease-linear" style={{ width: `${timerPercent}%` }}></div>
       </div>
 
       <h2 className="font-serif text-3xl font-bold text-primary leading-tight">

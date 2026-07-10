@@ -9,19 +9,19 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 import { useLanguage } from '@/app/contexts/LanguageContext'
 
-const navItems = [
-  { icon: Home, label: 'Início', href: '/dashboard' },
-  { icon: BookOpen, label: 'Explorar', href: '/conteudo' },
-  { icon: Users, label: 'Comunidade', href: '/comunidade' },
-  { icon: Trophy, label: 'Quizzes', href: '/quiz' },
-  { icon: UserCircle, label: 'Perfil', href: '/perfil' },
-  { icon: Settings, label: 'Configuracoes', href: '/configuracoes' },
-]
-
 export function AppLayout({ children, isAdmin = false }: { children: React.ReactNode, isAdmin?: boolean }) {
   const pathname = usePathname()
   const { role, user, logout } = useAuth()
   const { t } = useLanguage()
+
+  const navItems = [
+    { icon: Home, label: t.navHome, href: '/dashboard' },
+    { icon: BookOpen, label: t.navExplore, href: '/conteudo' },
+    { icon: Users, label: t.navForums, href: '/comunidade' },
+    { icon: Trophy, label: t.navQuizzes, href: '/quiz' },
+    { icon: UserCircle, label: t.navProfile, href: '/perfil' },
+    { icon: Settings, label: t.navSettings, href: '/configuracoes' },
+  ]
 
   let adminItems: Array<{icon: any, label: string, href: string}> = []
   
@@ -113,8 +113,8 @@ export function AppLayout({ children, isAdmin = false }: { children: React.React
             </div>
           )}
           {user && (
-            <button onClick={logout} className="mt-3 flex items-center gap-2 text-xs text-background hover:text-on-primary-container">
-              <LogOut className="w-3 h-3" /> Terminar sessao
+            <button onClick={logout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-primary-container bg-primary-container/20 px-3 py-3 text-sm font-bold text-background hover:bg-primary-container hover:text-on-primary-container transition-colors">
+              <LogOut className="w-4 h-4" /> Terminar sessao
             </button>
           )}
         </div>

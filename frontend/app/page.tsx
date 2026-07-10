@@ -108,7 +108,7 @@ export default function SplashPage() {
                 }}>
                   {t.alreadyAccount}
                 </Button>
-                <Button variant="ghost" className="w-full text-sm opacity-70" onClick={() => router.push('/dashboard')}>
+                <Button variant="outline" className="w-full text-sm border-primary/30 bg-surface-container-lowest/70 font-semibold" onClick={() => router.push('/dashboard')}>
                   {t.exploreGuest}
                 </Button>
               </div>
@@ -163,6 +163,9 @@ export default function SplashPage() {
             >
               <Card className="w-full">
                 <CardContent className="pt-8 space-y-6">
+                  <Button type="button" variant="ghost" size="sm" className="-ml-2" onClick={() => setStep(0)}>
+                    Voltar
+                  </Button>
                   <div className="text-center space-y-2">
                     <h2 className="font-serif text-2xl font-bold text-primary">{mode === 'login' ? t.welcome : t.createAccountTitle}</h2>
                     <p className="text-sm text-on-surface-variant">{t.accountAccess}</p>
