@@ -2,6 +2,8 @@ server:
   port: ${PORT:8080}
 
 spring:
+  application:
+    name: economia_historia
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${MYSQLHOST:localhost}:${MYSQLPORT:3306}/${MYSQLDATABASE:sistema_geral}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
     username: ${MYSQLUSER:root}
