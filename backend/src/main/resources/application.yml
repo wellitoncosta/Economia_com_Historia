@@ -1,13 +1,11 @@
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:8080}
 
 spring:
-  application:
-    name: economia_historia
   datasource:
-    url: jdbc:mysql://localhost:3306/sistema_geral?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: Kingrei124
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${MYSQLHOST:localhost}:${MYSQLPORT:3306}/${MYSQLDATABASE:sistema_geral}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${MYSQLUSER:root}
+    password: ${MYSQLPASSWORD:Kingrei124}
   jpa:
     hibernate:
       ddl-auto: update
